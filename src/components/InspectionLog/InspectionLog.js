@@ -53,22 +53,59 @@ import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 import InspectionDetailsPanel from '../Inspection/InspectionDetailsPanel';
 
-// Mock data for inspection logs
+// Enhanced mock data with consistent date ranges spanning different months
 const MOCK_INSPECTION_DATA = [
-  { id: 13236, date: '2024-10-05', shopName: 'ABC Cafe & Bakery', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13237, date: '2024-10-12', shopName: 'Sunrise Groceries', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13238, date: '2024-10-05', shopName: 'Golden Spoon Bakery', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13239, date: '2024-10-08', shopName: 'SwiftTech Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
-  { id: 13240, date: '2024-10-15', shopName: 'Urban Trends Clothing', gnDivision: 'Kolonnawa', ranking: 'C' },
-  { id: 13241, date: '2024-10-18', shopName: 'Wellness Pharmacy', gnDivision: 'Biyagama', ranking: 'D' },
-  { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Groceries', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', gnDivision: 'Biyagama', ranking: 'C' },
+  // October 2024
   { id: 13245, date: '2024-10-28', shopName: 'Family Pharmacy', gnDivision: 'Kolonnawa', ranking: 'A' },
+  { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', gnDivision: 'Biyagama', ranking: 'C' },
+  { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Groceries', gnDivision: 'Kaduwela', ranking: 'A' },
+  { id: 13241, date: '2024-10-18', shopName: 'Wellness Pharmacy', gnDivision: 'Biyagama', ranking: 'D' },
+  { id: 13240, date: '2024-10-15', shopName: 'Urban Trends Clothing', gnDivision: 'Kolonnawa', ranking: 'C' },
+  { id: 13239, date: '2024-10-12', shopName: 'SwiftTech Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
+  { id: 13238, date: '2024-10-08', shopName: 'Golden Spoon Bakery', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13237, date: '2024-10-05', shopName: 'Sunrise Groceries', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13236, date: '2024-10-02', shopName: 'ABC Cafe & Bakery', gnDivision: 'Biyagama', ranking: 'A' },
+  
+  // September 2024
+  { id: 13235, date: '2024-09-30', shopName: 'Sunset Bakery', gnDivision: 'Kolonnawa', ranking: 'B' },
+  { id: 13234, date: '2024-09-27', shopName: 'Health First Pharmacy', gnDivision: 'Kaduwela', ranking: 'A' },
+  { id: 13233, date: '2024-09-25', shopName: 'Quick Mart Grocery', gnDivision: 'Biyagama', ranking: 'C' },
+  { id: 13232, date: '2024-09-20', shopName: 'Spice Garden Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13231, date: '2024-09-18', shopName: 'Comfort Electronics', gnDivision: 'Kolonnawa', ranking: 'A' },
+  { id: 13230, date: '2024-09-15', shopName: 'Central Pharmacy', gnDivision: 'Biyagama', ranking: 'B' },
+  { id: 13229, date: '2024-09-10', shopName: 'Daily Fresh Market', gnDivision: 'Kaduwela', ranking: 'A' },
+  { id: 13228, date: '2024-09-07', shopName: 'Taste of Asia Restaurant', gnDivision: 'Kelaniya', ranking: 'C' },
+  { id: 13227, date: '2024-09-05', shopName: 'Modern Electronics', gnDivision: 'Biyagama', ranking: 'B' },
+  { id: 13226, date: '2024-09-02', shopName: 'Community Pharmacy', gnDivision: 'Kolonnawa', ranking: 'A' },
+  
+  // August 2024
+  { id: 13225, date: '2024-08-30', shopName: 'Green Grocers', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13224, date: '2024-08-28', shopName: 'Fine Dining Restaurant', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13223, date: '2024-08-25', shopName: 'Budget Electronics', gnDivision: 'Kaduwela', ranking: 'C' },
+  { id: 13222, date: '2024-08-22', shopName: 'Downtown Pharmacy', gnDivision: 'Kolonnawa', ranking: 'B' },
+  { id: 13221, date: '2024-08-20', shopName: 'Fresh Finds Market', gnDivision: 'Kelaniya', ranking: 'A' },
+  { id: 13220, date: '2024-08-18', shopName: 'Easy Tech Store', gnDivision: 'Biyagama', ranking: 'D' },
+  { id: 13219, date: '2024-08-15', shopName: 'Blissful Bakery', gnDivision: 'Kaduwela', ranking: 'B' },
+  { id: 13218, date: '2024-08-10', shopName: 'Convenience Mart', gnDivision: 'Kolonnawa', ranking: 'C' },
+  { id: 13217, date: '2024-08-05', shopName: 'Wellness Clinic Pharmacy', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13216, date: '2024-08-02', shopName: 'Family Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
+  
+  // July 2024
+  { id: 13215, date: '2024-07-30', shopName: 'Mega Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
+  { id: 13214, date: '2024-07-28', shopName: 'Value Grocery', gnDivision: 'Kolonnawa', ranking: 'A' },
+  { id: 13213, date: '2024-07-25', shopName: 'Town Pharmacy', gnDivision: 'Biyagama', ranking: 'C' },
+  { id: 13212, date: '2024-07-22', shopName: 'Royal Bakery', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13211, date: '2024-07-20', shopName: 'Elite Restaurant', gnDivision: 'Kaduwela', ranking: 'A' },
+  { id: 13210, date: '2024-07-15', shopName: 'Prime Electronics', gnDivision: 'Kolonnawa', ranking: 'B' },
+  { id: 13209, date: '2024-07-10', shopName: 'City Pharmacy', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13208, date: '2024-07-05', shopName: 'Budget Grocery', gnDivision: 'Kelaniya', ranking: 'C' },
+  { id: 13207, date: '2024-07-02', shopName: 'Cafe Supreme', gnDivision: 'Kaduwela', ranking: 'B' },
 ];
 
-// Available months for filtering (this would come from your data in a real app)
+// Available months for filtering - now matches the data
 const AVAILABLE_MONTHS = [
+  { value: 'All', label: 'All Dates' },
   { value: 'October 2024', label: 'October 2024' },
   { value: 'September 2024', label: 'September 2024' },
   { value: 'August 2024', label: 'August 2024' },
@@ -100,7 +137,7 @@ export const InspectionLog = () => {
   
   // State variables for filtering and sorting
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDate, setFilterDate] = useState('October 2024');
+  const [filterDate, setFilterDate] = useState('All');
   const [rankingFilter, setRankingFilter] = useState('All');
   const [filterShop, setFilterShop] = useState(null);
   const [inspectionData, setInspectionData] = useState([]);
@@ -133,6 +170,12 @@ export const InspectionLog = () => {
     return date.toISOString().split('T')[0];
   };
 
+  // Enhance date rendering in table with more user-friendly format
+  const formatTableDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   // Filter function to apply all active filters
   useEffect(() => {
     let filtered = [...inspectionData];
@@ -156,11 +199,15 @@ export const InspectionLog = () => {
       filtered = filtered.filter(item => item.shopName === filterShop.name);
     }
     
-    // Apply date filter
+    // Apply date filter - Enhanced to handle "All" option and exact month matching
     if (filterDate !== 'All') {
+      const [month, year] = filterDate.split(' ');
       filtered = filtered.filter(item => {
-        const inspectionDate = formatFilterDate(item.date);
-        return inspectionDate.startsWith(filterDate.split(' ')[0]);
+        const date = new Date(item.date);
+        return (
+          date.getFullYear() === parseInt(year) && 
+          date.toLocaleString('default', { month: 'long' }) === month
+        );
       });
     }
     
@@ -252,7 +299,7 @@ export const InspectionLog = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setRankingFilter('All');
-    setFilterDate('October 2024');
+    setFilterDate('All');
     setFilterShop(null);
   };
 
@@ -459,6 +506,7 @@ export const InspectionLog = () => {
                   {searchQuery && <span> for "{searchQuery}"</span>}
                   {rankingFilter !== 'All' && <span> with ranking {rankingFilter}</span>}
                   {filterShop && <span> for shop {filterShop.name}</span>}
+                  {filterDate !== 'All' && <span> from {filterDate}</span>}
                 </Typography>
               </Box>
               
@@ -485,7 +533,7 @@ export const InspectionLog = () => {
                             sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
                           >
                             <TableCell sx={{ fontWeight: 500 }}>#{inspection.id}</TableCell>
-                            <TableCell>{inspection.displayDate}</TableCell>
+                            <TableCell>{formatTableDate(inspection.date)}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{inspection.shopName}</TableCell>
                             <TableCell>{inspection.gnDivision}</TableCell>
                             <TableCell>
