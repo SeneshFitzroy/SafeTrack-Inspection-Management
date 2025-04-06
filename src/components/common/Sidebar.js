@@ -26,6 +26,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { alpha } from '@mui/material/styles';
 import logoImage from '../../assets/logo.png';
 import Logo from '../../assets/Logo';
@@ -88,6 +89,7 @@ const Sidebar = () => {
     if (path.includes('/analytics')) return 'analytics';
     if (path.includes('/profile')) return 'profile';
     if (path.includes('/settings')) return 'settings';
+    if (path.includes('/ai-assistant')) return 'ai-assistant';
     return 'dashboard';
   };
   
@@ -124,6 +126,12 @@ const Sidebar = () => {
       icon: <BarChartIcon />, 
       path: '/analytics', 
       id: 'analytics' 
+    },
+    { 
+      text: 'AI Assistant', 
+      icon: <SmartToyIcon />, 
+      path: '/ai-assistant', 
+      id: 'ai-assistant' 
     },
   ];
   

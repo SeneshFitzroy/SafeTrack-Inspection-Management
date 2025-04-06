@@ -18,6 +18,7 @@ import Settings from './components/Settings/Settings';
 import { AppSettingsProvider } from './contexts/AppSettingsContext';
 import { redirectToHomeIfNotAuthenticated, redirectToDashboardIfAuthenticated } from './utils/authUtils';
 import HomePage from './pages/HomePage';
+import ChatbotPage from './pages/ChatbotPage';
 
 // Create a theme instance
 const theme = createTheme({
@@ -83,6 +84,13 @@ const theme = createTheme({
 
 function App() {
   useEffect(() => {
+    // Debug environment variables
+    console.log("Environment variables check:");
+    console.log("REACT_APP_OPENAI_API_KEY exists:", !!process.env.REACT_APP_OPENAI_API_KEY);
+    if (process.env.REACT_APP_OPENAI_API_KEY) {
+      console.log("API key length:", process.env.REACT_APP_OPENAI_API_KEY.length);
+    }
+
     // Prevent infinite redirection loops
     const pageLoads = parseInt(sessionStorage.getItem('pageLoadCount') || '0') + 1;
     sessionStorage.setItem('pageLoadCount', pageLoads.toString());
@@ -192,6 +200,10 @@ function App() {
               element={
                 localStorage.getItem('authToken') ? <InspectionDetailsPanel /> : <Navigate to="/" replace />
               }
+            />
+            <Route 
+              path="/ai-assistant" 
+              element={<ChatbotPage />} 
             />
           </Routes>
         </Router>
