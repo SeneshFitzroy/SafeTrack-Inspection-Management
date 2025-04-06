@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TotalInspection from './pages/totalInspection';
-import HighRiskLevelShops from './pages/highRiskLevelShops'; // ✅ updated import
+import CategoryBasedShopAnalytics from './pages/categoryBasedShopAnalytics'; // ✅ updated import
 import './output.css';
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<TotalInspection />} />
-        <Route path="/high-risk-shops" element={<HighRiskLevelShops />} /> {/* ✅ added route */}
+        <Route path="/category-Based-Shop-Analytics" element={<CategoryBasedShopAnalytics />} /> {/* ✅ added route */}
       </Routes>
     </Router>
   );
