@@ -35,11 +35,27 @@ import { useNavigate } from 'react-router-dom';
 // Styled components
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
-    right: -3,
-    top: 3,
+    right: -2,
+    top: 2,
     backgroundColor: theme.palette.error.main,
     padding: '0 4px',
+    fontSize: '0.65rem',
+    fontWeight: 'bold',
+    minWidth: '18px',
+    height: '18px',
     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+    animation: 'pulse 2s infinite',
+    '@keyframes pulse': {
+      '0%': {
+        boxShadow: `0 0 0 0 ${alpha(theme.palette.error.main, 0.7)}`,
+      },
+      '70%': {
+        boxShadow: `0 0 0 6px ${alpha(theme.palette.error.main, 0)}`,
+      },
+      '100%': {
+        boxShadow: `0 0 0 0 ${alpha(theme.palette.error.main, 0)}`,
+      },
+    },
   },
 }));
 
@@ -242,10 +258,20 @@ const NotificationPopover = () => {
         color="inherit" 
         onClick={handleClick}
         aria-describedby={id}
-        sx={{ mr: 1 }}
+        sx={{ 
+          ml: 'auto', // Push to right
+          color: theme.palette.primary.main,
+          transition: 'transform 0.2s',
+          '&:hover': { 
+            color: theme.palette.primary.dark,
+            transform: 'scale(1.05)',
+            backgroundColor: alpha(theme.palette.primary.main, 0.08)
+          },
+          p: 1.2 // Slightly larger padding for better touch target
+        }}
       >
         <StyledBadge badgeContent={unreadCount} color="error">
-          <NotificationsIcon />
+          <NotificationsIcon sx={{ fontSize: '1.5rem' }} /> {/* Slightly larger icon */}
         </StyledBadge>
       </IconButton>
       
