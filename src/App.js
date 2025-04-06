@@ -20,6 +20,21 @@ import { redirectToHomeIfNotAuthenticated, redirectToDashboardIfAuthenticated } 
 import HomePage from './pages/HomePage';
 import ChatbotPage from './pages/ChatbotPage';
 
+// Enhanced ProtectedRoute component that checks authentication
+function ProtectedRoute({ children }) {
+  // Check if user is logged in
+  const isAuthenticated = localStorage.getItem('authToken') !== null;
+  
+  // If not authenticated, redirect to home
+  if (!isAuthenticated) {
+    // For logout scenarios, ensure we go to home route without any cached state
+    return <Navigate to="/" replace />;
+  }
+  
+  // If authenticated, render the protected content
+  return children;
+}
+
 // Create a theme instance
 const theme = createTheme({
   palette: {
@@ -116,6 +131,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Clear any stale auth states when the app loads
+    if (sessionStorage.getItem('loggedOut') === 'true' && localStorage.getItem('authToken')) {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('user');
+    }
+
     // Check the URL parameters - if we have a logout parameter, clear everything
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('t') || window.location.pathname === '/') {
@@ -146,60 +167,81 @@ function App() {
         <CssBaseline />
         <Router>
           <Routes>
-            <Route path="/" element={<ChatbotPage />} />
+            {/* Public route */}
+            <Route path="/" element={<HomePage />} />
             <Route path="/ai-assistant" element={<ChatbotPage />} />
+            
+            {/* Protected routes */}
             <Route 
               path="/dashboard" 
               element={
-                localStorage.getItem('authToken') ? <Dashboard /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
               } 
             />
             <Route 
               path="/calendar" 
               element={
-                localStorage.getItem('authToken') ? <Calendar /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <Calendar />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/inspection-log" 
               element={
-                localStorage.getItem('authToken') ? <InspectionLog /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <InspectionLog />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/shop-management" 
               element={
-                localStorage.getItem('authToken') ? <ShopManagement /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <ShopManagement />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/analytics" 
               element={
-                localStorage.getItem('authToken') ? <Analytics /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/profile" 
               element={
-                localStorage.getItem('authToken') ? <Profile /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/settings" 
               element={
-                localStorage.getItem('authToken') ? <Settings /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/inspection-form" 
               element={
-                localStorage.getItem('authToken') ? <InspectionForm /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <InspectionForm />
+                </ProtectedRoute>
               }
             />
             <Route 
               path="/inspection-details/:id" 
               element={
-                localStorage.getItem('authToken') ? <InspectionDetailsPanel /> : <Navigate to="/" replace />
+                <ProtectedRoute>
+                  <InspectionDetailsPanel />
+                </ProtectedRoute>
               }
             />
           </Routes>

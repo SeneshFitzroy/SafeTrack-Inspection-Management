@@ -38,28 +38,20 @@ const Sidebar = () => {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const handleLogout = () => {
-    try {
-      // Close the dialog
-      setLogoutDialogOpen(false);
-      
-      // Clear auth data directly
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      sessionStorage.clear();
-      
-      // Navigate directly without using the external function
-      // that might be causing loops
-      window.location.href = '/';
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Emergency fallback
-      window.location.href = '/';
-    }
+    // First clear all authentication data
+    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('user');
+    
+    // Set the logged out flag
+    sessionStorage.setItem('loggedOut', 'true');
+    
+    // Use direct window location change to force a complete page reload
+    // This is more reliable than navigate() for logout scenarios
+    window.location.href = '/';
   };
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = (e) => {
+    e.preventDefault();
     setLogoutDialogOpen(true);
   };
 
@@ -279,24 +271,21 @@ const Sidebar = () => {
         <ListItemButton
           onClick={handleLogoutClick}
           sx={{
-            borderRadius: 1,
-            backgroundColor: (theme) => alpha(theme.palette.error.main, 0.1),
+            py: 1.2,
             color: 'error.main',
             '&:hover': {
-              backgroundColor: (theme) => alpha(theme.palette.error.main, 0.2),
-            },
-            py: 1,
-            mb: 1
+              bgcolor: 'rgba(211, 47, 47, 0.04)',
+            }
           }}
         >
-          <ListItemIcon sx={{ color: 'error.main', minWidth: 40 }}>
+          <ListItemIcon sx={{ minWidth: 40, color: 'error.main' }}>
             <LogoutIcon />
           </ListItemIcon>
           <ListItemText 
             primary="Logout" 
             primaryTypographyProps={{ 
-              fontWeight: 'medium',
-              fontSize: '0.9rem'
+              fontWeight: 500,
+              color: 'error.main'
             }} 
           />
         </ListItemButton>

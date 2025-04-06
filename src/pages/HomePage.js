@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, Stack } from '@mui/material';
+import { Box, Button, Typography, Stack, Alert, Collapse, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 import logo from '../assets/logo.png';
@@ -8,18 +9,57 @@ import logo from '../assets/logo.png';
 const HomePage = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [logoutAlert, setLogoutAlert] = useState({
+    show: false,
+    message: ''
+  });
   const navigate = useNavigate();
 
-  // Check if user is already logged in
+  // Check if user is already logged in or just logged out
   useEffect(() => {
     if (localStorage.getItem('authToken')) {
       navigate('/dashboard');
     }
     
-    // Check if we just logged out
+    // Enhanced logout message with timestamp
     if (sessionStorage.getItem('loggedOut') === 'true') {
+      // Get logout time if available
+      const logoutTime = sessionStorage.getItem('logoutTime');
+      let message = "You have been successfully logged out.";
+      
+      if (logoutTime) {
+        try {
+          const logoutDate = new Date(logoutTime);
+          const now = new Date();
+          const timeDiff = Math.floor((now - logoutDate) / 1000 / 60); // minutes
+          
+          if (timeDiff < 1) {
+            message = "You have been successfully logged out just now.";
+          } else if (timeDiff === 1) {
+            message = "You have been successfully logged out 1 minute ago.";
+          } else if (timeDiff < 60) {
+            message = `You have been successfully logged out ${timeDiff} minutes ago.`;
+          } else {
+            const hours = Math.floor(timeDiff / 60);
+            if (hours === 1) {
+              message = "You have been successfully logged out 1 hour ago.";
+            } else {
+              message = `You have been successfully logged out ${hours} hours ago.`;
+            }
+          }
+        } catch (e) {
+          console.error("Error calculating logout time:", e);
+        }
+      }
+      
+      setLogoutAlert({
+        show: true,
+        message: message
+      });
+      
+      // Clear the logout flags
       sessionStorage.removeItem('loggedOut');
-      console.log('User has been logged out');
+      sessionStorage.removeItem('logoutTime');
     }
   }, [navigate]);
 
@@ -59,6 +99,31 @@ const HomePage = () => {
       padding: 3,
       background: 'linear-gradient(135deg, #e0f7fa 0%, #f8bbd0 100%)',
     }}>
+      {/* Logout Alert */}
+      <Collapse in={logoutAlert.show} sx={{ position: 'absolute', top: 20, width: '90%', maxWidth: 600, zIndex: 10 }}>
+        <Alert 
+          severity="success"
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => setLogoutAlert({...logoutAlert, show: false})}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ 
+            mb: 2, 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+            borderRadius: 2,
+            '& .MuiAlert-message': { fontWeight: 500 }
+          }}
+        >
+          {logoutAlert.message}
+        </Alert>
+      </Collapse>
+
       {/* Logo - Using the PNG logo from assets with significantly increased size */}
       <Box sx={{ 
         mb: 6, 
