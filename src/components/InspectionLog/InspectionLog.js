@@ -103,7 +103,7 @@ export const InspectionLog = () => {
   const [filterDate, setFilterDate] = useState('October 2024');
   const [rankingFilter, setRankingFilter] = useState('All');
   const [filterShop, setFilterShop] = useState(null);
-  const [inspectionData, setInspectionData] = useState(MOCK_INSPECTION_DATA);
+  const [inspectionData, setInspectionData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [sortField, setSortField] = useState('date');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -116,7 +116,23 @@ export const InspectionLog = () => {
   // New state for inspection details panel
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [viewInspectionData, setViewInspectionData] = useState(null);
-  
+
+  // Use consistent date format for both display and filtering
+  const formatDisplayDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Format date for filter comparison (YYYY-MM-DD)
+  const formatFilterDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
   // Filter function to apply all active filters
   useEffect(() => {
     let filtered = [...inspectionData];
@@ -140,10 +156,12 @@ export const InspectionLog = () => {
       filtered = filtered.filter(item => item.shopName === filterShop.name);
     }
     
-    // Apply date filter (in a real app, you'd parse the dates properly)
-    // This is simplified for the example
+    // Apply date filter
     if (filterDate !== 'All') {
-      // For demo, just keep all data since we're using mock data for October 2024
+      filtered = filtered.filter(item => {
+        const inspectionDate = formatFilterDate(item.date);
+        return inspectionDate.startsWith(filterDate.split(' ')[0]);
+      });
     }
     
     // Apply sorting
@@ -294,6 +312,16 @@ export const InspectionLog = () => {
       </Box>
     </TableCell>
   );
+
+  useEffect(() => {
+    const formattedInspections = MOCK_INSPECTION_DATA.map(inspection => ({
+      ...inspection,
+      dateForFilter: formatFilterDate(inspection.date),
+      displayDate: formatDisplayDate(inspection.date)
+    }));
+    setInspectionData(formattedInspections);
+    setFilteredData(formattedInspections);
+  }, []);
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F5F8FF' }}>
@@ -457,7 +485,7 @@ export const InspectionLog = () => {
                             sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
                           >
                             <TableCell sx={{ fontWeight: 500 }}>#{inspection.id}</TableCell>
-                            <TableCell>{inspection.date}</TableCell>
+                            <TableCell>{inspection.displayDate}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{inspection.shopName}</TableCell>
                             <TableCell>{inspection.gnDivision}</TableCell>
                             <TableCell>
