@@ -65,7 +65,7 @@ export default function TotalInspection() {
           <button className="px-6 py-2 bg-white text-black border border-b-0 font-semibold w-1/3">
             High-Risk Level Shops
           </button>
-          <button className="px-6 py-2 bg-blue-600 text-black border border-b-0 font-semibold w-1/3">
+          <button className="px-6 py-2 bg-blue-600 text-white border border-b-0 font-semibold w-1/3">
             Category-Based Shop Analytics
           </button>
         </div>
