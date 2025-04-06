@@ -66,34 +66,45 @@ const LoginForm = ({ open, onClose, onLoginSuccess }) => {
     if (formError) setFormError('');
   };
 
-  const handleLogin = () => {
-    // Validate form
-    if (!username.trim()) {
-      setFormError('Please enter your username or email');
-      document.getElementById("username-input")?.focus();
-      return;
-    }
-    
-    if (!password) {
-      setFormError('Please enter your password');
-      return;
-    }
-
-    // Simulate login
-    setIsLoading(true);
-    setFormError('');
-    
-    // Mock API call
-    setTimeout(() => {
-      console.log("Login attempt with:", { username, password, rememberDevice });
+  const handleLogin = async () => {
+    // For demo purposes - in a real app would verify with backend
+    try {
+      // Validate inputs
+      if (!username || !password) {
+        setFormError('Please enter both username and password');
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Store authentication data
+      localStorage.setItem('authToken', 'demo-token-123456');
+      localStorage.setItem('userData', JSON.stringify({
+        name: 'John Doe',
+        email: username,
+        role: 'inspector'
+      }));
+      
+      // Close login form
+      onClose();
+      
+      // Notify parent component of successful login
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        // Fallback direct redirection if the parent callback doesn't work
+        window.location.href = '/dashboard';
+      }
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setFormError('Authentication failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      
-      // Close the modal
-      if (onClose) onClose();
-      
-      // Call onLoginSuccess to navigate to dashboard
-      if (onLoginSuccess) onLoginSuccess();
-    }, 1500);
+    }
   };
 
   const handleSubmit = (e) => {

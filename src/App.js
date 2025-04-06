@@ -17,6 +17,7 @@ import Profile from './components/Profile/Profile';
 import Settings from './components/Settings/Settings';
 import { AppSettingsProvider } from './contexts/AppSettingsContext';
 import { redirectToHomeIfNotAuthenticated, redirectToDashboardIfAuthenticated } from './utils/authUtils';
+import HomePage from './pages/HomePage';
 
 // Create a theme instance
 const theme = createTheme({
@@ -137,16 +138,61 @@ function App() {
         <CssBaseline />
         <Router>
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/inspection-log" element={<InspectionLog />} />
-            <Route path="/shop-management" element={<ShopManagement />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/inspection-form" element={<InspectionForm />} />
-            <Route path="/inspection-details/:id" element={<InspectionDetailsPanel />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<HomePage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                localStorage.getItem('authToken') ? <Dashboard /> : <Navigate to="/" replace />
+              } 
+            />
+            <Route 
+              path="/calendar" 
+              element={
+                localStorage.getItem('authToken') ? <Calendar /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/inspection-log" 
+              element={
+                localStorage.getItem('authToken') ? <InspectionLog /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/shop-management" 
+              element={
+                localStorage.getItem('authToken') ? <ShopManagement /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/analytics" 
+              element={
+                localStorage.getItem('authToken') ? <Analytics /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/profile" 
+              element={
+                localStorage.getItem('authToken') ? <Profile /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/settings" 
+              element={
+                localStorage.getItem('authToken') ? <Settings /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/inspection-form" 
+              element={
+                localStorage.getItem('authToken') ? <InspectionForm /> : <Navigate to="/" replace />
+              }
+            />
+            <Route 
+              path="/inspection-details/:id" 
+              element={
+                localStorage.getItem('authToken') ? <InspectionDetailsPanel /> : <Navigate to="/" replace />
+              }
+            />
           </Routes>
         </Router>
       </ThemeProvider>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -66,6 +66,13 @@ const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Check authentication
+  useEffect(() => {
+    if (!localStorage.getItem('authToken')) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   // Optimize spacing for better layout
   const SPACING = {

@@ -18,10 +18,23 @@ export const isAuthenticated = () => {
   return authState;
 };
 
-// Log the user out and redirect to home - even simpler implementation
+// Log the user out and redirect to home
 export const logout = () => {
+  // Static path to the homepage (not dashboard)
+  const homePath = '/';
+  
+  // Clear all auth data
   localStorage.removeItem('authToken');
-  window.location = '/';
+  localStorage.removeItem('userData');
+  localStorage.removeItem('user');
+  localStorage.removeItem('isAuthenticated');
+  sessionStorage.clear();
+  
+  // Set flag to indicate we're coming from logout
+  sessionStorage.setItem('loggedOut', 'true');
+  
+  // Most basic redirect to homepage
+  window.location.href = homePath;
 };
 
 // Fixed version that won't cause reload loops

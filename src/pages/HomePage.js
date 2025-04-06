@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
 import logo from '../assets/logo.png';
@@ -7,18 +8,20 @@ import logo from '../assets/logo.png';
 const HomePage = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const navigate = useNavigate();
 
-  // Simplified useEffect that won't cause reload loops
+  // Check if user is already logged in
   useEffect(() => {
-    // Only clean URL parameters - no reloading
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('logout')) {
-      console.log("Logout detected via URL parameter");
-      // Just clean the URL, don't reload or clear storage
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+    if (localStorage.getItem('authToken')) {
+      navigate('/dashboard');
     }
-  }, []);
+    
+    // Check if we just logged out
+    if (sessionStorage.getItem('loggedOut') === 'true') {
+      sessionStorage.removeItem('loggedOut');
+      console.log('User has been logged out');
+    }
+  }, [navigate]);
 
   const handleOpenLogin = () => {
     setShowLoginForm(true);
@@ -31,7 +34,8 @@ const HomePage = () => {
   };
 
   const handleLoginSuccess = () => {
-    // Navigate to dashboard
+    // Navigate to dashboard using window.location for a reliable redirect
+    console.log("Login successful, redirecting to dashboard");
     window.location.href = '/dashboard';
   };
 
