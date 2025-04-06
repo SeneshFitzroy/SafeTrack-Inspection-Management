@@ -1,8 +1,17 @@
 import React from "react";
-import { FaUserCircle, FaSearch, FaCalendarAlt, FaClipboardList, FaStore, FaChartBar, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa"; // Import icons
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  FaUserCircle,
+  FaSearch,
+  FaCalendarAlt,
+  FaClipboardList,
+  FaStore,
+  FaChartBar,
+  FaUser,
+  FaCog,
+  FaSignOutAlt
+} from "react-icons/fa";
 
-
+// Sample data for bar chart
 const data = [
   { day: 5, inspections: 500 },
   { day: 10, inspections: 700 },
@@ -12,15 +21,24 @@ const data = [
   { day: 30, inspections: 400 },
 ];
 
+// ✅ Define table data
+const tableRows = Array(11).fill({
+  refNo: "13236",
+  shopName: "ABC Cafe & Bakery",
+  region: "Biyagama",
+  lastInspection: "2024-10-05",
+  nextInspection: "2025-01-04",
+});
+
 export default function TotalInspection() {
   const months = [
-    "January", "February", "March", "April", "May", "June", 
+    "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
-  
+
   const years = [];
   const currentYear = new Date().getFullYear();
-  for (let i = currentYear - 10; i <= currentYear + 0; i++) {
+  for (let i = currentYear - 10; i <= currentYear; i++) {
     years.push(i);
   }
 
@@ -73,21 +91,47 @@ export default function TotalInspection() {
           </button>
         </div>
 
-
+        {/* Modified Table Container */}
+        <div className="overflow-x-auto w-full max-w-full -mx-6 px-6">
+          <table className="table-auto text-left border border-gray-200 w-full min-w-full">
+            <thead>
+              <tr className="bg-blue-100 text-blue-800">
+                <th className="py-2 px-4">Reference No</th>
+                <th className="py-2 px-4">Shop Name</th>
+                <th className="py-2 px-4">GN Region</th>
+                <th className="py-2 px-4">Last Inspection</th>
+                <th className="py-2 px-4">Next Inspection</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row, i) => (
+                <tr key={i} className="border-t hover:bg-gray-50">
+                  <td className="py-2 px-4">{row.refNo}</td>
+                  <td className="py-2 px-4">{row.shopName}</td>
+                  <td className="py-2 px-4">{row.region}</td>
+                  <td className="py-2 px-4">{row.lastInspection}</td>
+                  <td className="py-2 px-4">{row.nextInspection}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </main>
     </div>
   );
 }
+
 function MenuItem({ icon, text, active }) {
-    return (
-      <div
-        className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
-          active ? "bg-blue-600 text-white mx-2" : "hover:bg-gray-100 text-black"
-        } ${active ? "" : ""}`} // Remove rounded style for both active and hover
-      >
-        {icon}
-        <span className="font-medium">{text}</span>
-      </div>
-    );
-  }
-  
+  return (
+    <div
+      className={`flex items-center gap-3 px-4 py-2 cursor-pointer ${
+        active ? "bg-blue-600 text-white mx-2" : "hover:bg-gray-100 text-black"
+      }`}
+    >
+      {icon}
+      <span className="font-medium">{text}</span>
+    </div>
+  );
+}
+
+
