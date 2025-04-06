@@ -93,7 +93,7 @@ export default function TotalInspection() {
 
         {/* Modified Table Container */}
         <div className="overflow-x-auto w-full max-w-full -mx-6 px-6">
-          <table className="table-auto text-left border border-gray-200 w-full min-w-full">
+          <table className="table-auto text-left border border-gray-200 w-full min-w-full bg-white">
             <thead>
               <tr className="bg-blue-100 text-blue-800">
                 <th className="py-2 px-4">Reference No</th>
