@@ -458,28 +458,6 @@ const NotificationPopover = () => {
             </EmptyStateBox>
           )}
         </Box>
-        
-        {/* Footer */}
-        <Box sx={{ 
-          p: 2, 
-          borderTop: `1px solid ${theme.palette.divider}`,
-          textAlign: 'center'
-        }}>
-          <Button 
-            color="primary" 
-            size="small" 
-            onClick={() => {
-              handleClose();
-              navigate('/notifications');
-            }}
-            sx={{ 
-              textTransform: 'none',
-              fontWeight: 500
-            }}
-          >
-            View All Notifications
-          </Button>
-        </Box>
       </Popover>
     </>
   );
