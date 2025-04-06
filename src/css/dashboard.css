@@ -1,0 +1,241 @@
+/* App.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  body {
+    background-color: #f5f5f5;
+  }
+  
+  .app-container {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  /* Sidebar Styling */
+  .sidebar {
+    width: 200px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logo {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .logo-text {
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+  }
+  
+  .magnifier {
+    margin-right: 5px;
+  }
+  
+  .logo-safe {
+    color: #3366cc;
+  }
+  
+  .menu-items {
+    flex: 1;
+  }
+  
+  .menu-item {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .menu-item:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .menu-item.active {
+    background-color: #e6f0ff;
+    border-left: 3px solid #3366cc;
+  }
+  
+  .icon {
+    margin-right: 10px;
+  }
+  
+  .logout-container {
+    padding: 15px;
+  }
+  
+  .logout-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #cc0000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .logout-icon {
+    margin-right: 10px;
+  }
+  
+  /* Main Content Styling */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .header {
+    padding: 15px 20px;
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .search-input {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    width: 250px;
+  }
+  
+  .search-btn {
+    background: none;
+    border: none;
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+  }
+  
+  .user-profile {
+    display: flex;
+    align-items: center;
+  }
+  
+  .user-icon {
+    margin-right: 10px;
+    font-size: 20px;
+  }
+  
+  .user-name {
+    font-weight: bold;
+  }
+  
+  .user-role {
+    font-size: 12px;
+    color: #777;
+  }
+  
+  /* Content Styling */
+  .content {
+    padding: 20px;
+    flex: 1;
+  }
+  
+  .button-group {
+    margin-bottom: 20px;
+    display: flex;
+  }
+  
+  .add-btn, .export-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .add-btn {
+    background-color: #3366cc;
+    color: white;
+  }
+  
+  .export-btn {
+    background-color: #3366cc;
+    color: white;
+  }
+  
+  .add-btn span, .export-btn span {
+    margin-right: 5px;
+  }
+  
+  /* Table Styling */
+  .table-container {
+    background-color: white;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  thead {
+    background-color: #f0f5ff;
+  }
+  
+  th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  th {
+    font-size: 13px;
+    font-weight: bold;
+    color: #444;
+  }
+  
+  .action-buttons {
+    display: flex;
+  }
+  
+  .view-btn, .edit-btn, .delete-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 3px;
+    margin-right: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .view-btn {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .edit-btn {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .delete-btn {
+    background-color: #F44336;
+    color: white;
+  }
