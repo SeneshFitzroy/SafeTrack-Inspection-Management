@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, Stack } from '@mui/material';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
@@ -7,6 +7,18 @@ import logo from '../assets/logo.png';
 const HomePage = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+
+  // Simplified useEffect that won't cause reload loops
+  useEffect(() => {
+    // Only clean URL parameters - no reloading
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('logout')) {
+      console.log("Logout detected via URL parameter");
+      // Just clean the URL, don't reload or clear storage
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, []);
 
   const handleOpenLogin = () => {
     setShowLoginForm(true);

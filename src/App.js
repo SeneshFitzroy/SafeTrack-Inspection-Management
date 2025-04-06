@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, CssBaseline } from '@mui/material';
 import Dashboard from './components/Dashboard/Dashboard';
 import Calendar from './components/Dashboard/Calendar';
@@ -6,6 +6,17 @@ import InspectionLog from './components/InspectionLog/InspectionLog';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PlaceholderPage from './components/common/PlaceholderPage';
+import InspectionForm from './components/Inspection/InspectionForm';
+import InspectionDetailsPanel from './components/Inspection/InspectionDetailsPanel';
+import ShopManagement from './components/Shop/ShopManagement';
+import Analytics from './components/Analytics/Analytics';
+import TotalInspections from './components/Analytics/TotalInspections';
+import HighRiskShops from './components/Analytics/HighRiskShops';
+import CategoryAnalytics from './components/Analytics/CategoryAnalytics';
+import Profile from './components/Profile/Profile';
+import Settings from './components/Settings/Settings';
+import { AppSettingsProvider } from './contexts/AppSettingsContext';
+import { redirectToHomeIfNotAuthenticated, redirectToDashboardIfAuthenticated } from './utils/authUtils';
 
 // Create a theme instance
 const theme = createTheme({
@@ -70,22 +81,100 @@ const theme = createTheme({
 });
 
 function App() {
+  useEffect(() => {
+    // Add these fixes early in your App component, before any routing
+
+    // Prevent infinite redirection loops
+    const pageLoads = parseInt(sessionStorage.getItem('pageLoadCount') || '0') + 1;
+    sessionStorage.setItem('pageLoadCount', pageLoads.toString());
+    
+    // If more than 3 loads in quick succession, disable redirects temporarily
+    if (pageLoads > 3) {
+      console.warn('Too many redirects detected. Disabling auth redirects temporarily.');
+      sessionStorage.setItem('disableAuthRedirects', 'true');
+      
+      // Reset counter after 5 seconds
+      setTimeout(() => {
+        sessionStorage.setItem('pageLoadCount', '0');
+        sessionStorage.removeItem('disableAuthRedirects');
+      }, 5000);
+    }
+    
+    // Reset counter after 10 seconds of normal operation
+    const resetTimer = setTimeout(() => {
+      sessionStorage.setItem('pageLoadCount', '0');
+    }, 10000);
+    
+    return () => clearTimeout(resetTimer);
+  }, []);
+
+  useEffect(() => {
+    // Check the URL parameters - if we have a logout parameter, clear everything
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('t') || window.location.pathname === '/') {
+      sessionStorage.clear();
+    }
+  }, []);
+
+  // Modify your route protection logic, if present:
+
+  // Before rendering protected routes, add this checkation.pathname.includes('/login') && 
+  const shouldCheckAuth = () => {ocation.pathname.includes('/register')) {
+    return sessionStorage.getItem('disableAuthRedirects') !== 'true';NotAuthenticated();
+  };
+
+  return (   // Prevent accessing login page when already authenticated
+    <AppSettingsProvider>    if (window.location.pathname === '/') {
+      <ThemeProvider theme={theme}> redirect away from home page
+        <CssBaseline />    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export default App;}  );    </AppSettingsProvider>      </ThemeProvider>        </Router>          </Routes>            <Route path="/" element={<Navigate to="/dashboard" replace />} />            <Route path="/inspection-details/:id" element={<InspectionDetailsPanel />} />            <Route path="/inspection-form" element={<InspectionForm />} />            <Route path="/settings" element={<Settings />} />            <Route path="/profile" element={<Profile />} />            <Route path="/analytics" element={<Analytics />} />            <Route path="/shop-management" element={<ShopManagement />} />            <Route path="/inspection-log" element={<InspectionLog />} />            <Route path="/calendar" element={<Calendar />} />            />              }                 shouldCheckAuth() && !redirectToDashboardIfAuthenticated() ? <Navigate to="/" /> : <Dashboard />              element={              path="/dashboard"             <Route           <Routes>        <Router>  }, []);
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/inspection-log" element={<InspectionLog />} />
-          <Route path="/shop-management" element={<PlaceholderPage title="Shop Management" />} />
-          <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
-          <Route path="/profile" element={<PlaceholderPage title="Profile" />} />
-          <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <AppSettingsProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/inspection-log" element={<InspectionLog />} />
+            <Route path="/shop-management" element={<ShopManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/inspection-form" element={<InspectionForm />} />
+            <Route path="/inspection-details/:id" element={<InspectionDetailsPanel />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </AppSettingsProvider>
   );
 }
 

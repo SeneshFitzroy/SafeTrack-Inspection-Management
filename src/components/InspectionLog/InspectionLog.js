@@ -25,9 +25,10 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  Autocomplete,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -50,19 +51,20 @@ import ErrorIcon from '@mui/icons-material/Error';
 import HelpIcon from '@mui/icons-material/Help';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
+import InspectionDetailsPanel from '../Inspection/InspectionDetailsPanel';
 
 // Mock data for inspection logs
 const MOCK_INSPECTION_DATA = [
-  { id: 13236, date: '2024-10-05', shopName: 'ABC Cafe & Bakery', inspector: 'John Doe', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13237, date: '2024-10-12', shopName: 'Sunrise Groceries', inspector: 'Jane Smith', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13238, date: '2024-10-05', shopName: 'Golden Spoon Bakery', inspector: 'John Doe', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13239, date: '2024-10-08', shopName: 'SwiftTech Electronics', inspector: 'Michael Brown', gnDivision: 'Kaduwela', ranking: 'B' },
-  { id: 13240, date: '2024-10-15', shopName: 'Urban Trends Clothing', inspector: 'Sarah Johnson', gnDivision: 'Kolonnawa', ranking: 'C' },
-  { id: 13241, date: '2024-10-18', shopName: 'Wellness Pharmacy', inspector: 'Robert Wilson', gnDivision: 'Biyagama', ranking: 'D' },
-  { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Groceries', inspector: 'Emma Davis', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', inspector: 'John Doe', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', inspector: 'Jane Smith', gnDivision: 'Biyagama', ranking: 'C' },
-  { id: 13245, date: '2024-10-28', shopName: 'Family Pharmacy', inspector: 'Michael Brown', gnDivision: 'Kolonnawa', ranking: 'A' },
+  { id: 13236, date: '2024-10-05', shopName: 'ABC Cafe & Bakery', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13237, date: '2024-10-12', shopName: 'Sunrise Groceries', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13238, date: '2024-10-05', shopName: 'Golden Spoon Bakery', gnDivision: 'Biyagama', ranking: 'A' },
+  { id: 13239, date: '2024-10-08', shopName: 'SwiftTech Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
+  { id: 13240, date: '2024-10-15', shopName: 'Urban Trends Clothing', gnDivision: 'Kolonnawa', ranking: 'C' },
+  { id: 13241, date: '2024-10-18', shopName: 'Wellness Pharmacy', gnDivision: 'Biyagama', ranking: 'D' },
+  { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Groceries', gnDivision: 'Kaduwela', ranking: 'A' },
+  { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
+  { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', gnDivision: 'Biyagama', ranking: 'C' },
+  { id: 13245, date: '2024-10-28', shopName: 'Family Pharmacy', gnDivision: 'Kolonnawa', ranking: 'A' },
 ];
 
 // Available months for filtering (this would come from your data in a real app)
@@ -82,14 +84,25 @@ const RANKING_OPTIONS = [
   { value: 'D', label: 'D - Poor' },
 ];
 
+// Shop options
+const SHOP_OPTIONS = [
+  { id: 'SH001', name: 'Golden Dragon Restaurant' },
+  { id: 'SH002', name: 'Tasty Bakery' },
+  { id: 'SH003', name: 'ABC Cafe & Bakery' },
+  { id: 'SH004', name: 'Sunrise Diner' },
+  { id: 'SH005', name: 'Spice Heaven' },
+];
+
 export const InspectionLog = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   
   // State variables for filtering and sorting
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState('October 2024');
   const [rankingFilter, setRankingFilter] = useState('All');
+  const [filterShop, setFilterShop] = useState(null);
   const [inspectionData, setInspectionData] = useState(MOCK_INSPECTION_DATA);
   const [filteredData, setFilteredData] = useState([]);
   const [sortField, setSortField] = useState('date');
@@ -100,6 +113,10 @@ export const InspectionLog = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState('view'); // 'view', 'edit', or 'delete'
   
+  // New state for inspection details panel
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [viewInspectionData, setViewInspectionData] = useState(null);
+  
   // Filter function to apply all active filters
   useEffect(() => {
     let filtered = [...inspectionData];
@@ -108,14 +125,19 @@ export const InspectionLog = () => {
     if (searchQuery) {
       filtered = filtered.filter(item => 
         item.shopName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        item.inspector.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.id.toString().includes(searchQuery)
+        item.id.toString().includes(searchQuery) ||
+        item.gnDivision.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
     // Apply ranking filter
     if (rankingFilter !== 'All') {
       filtered = filtered.filter(item => item.ranking === rankingFilter);
+    }
+    
+    // Apply shop filter
+    if (filterShop) {
+      filtered = filtered.filter(item => item.shopName === filterShop.name);
     }
     
     // Apply date filter (in a real app, you'd parse the dates properly)
@@ -143,7 +165,7 @@ export const InspectionLog = () => {
     });
     
     setFilteredData(filtered);
-  }, [searchQuery, rankingFilter, filterDate, inspectionData, sortField, sortDirection]);
+  }, [searchQuery, rankingFilter, filterDate, filterShop, inspectionData, sortField, sortDirection]);
 
   // Sort function
   const handleSort = (field) => {
@@ -158,8 +180,54 @@ export const InspectionLog = () => {
   // Function to handle dialog actions
   const handleAction = (action, inspection) => {
     setSelectedInspection(inspection);
-    setDialogMode(action);
-    setDialogOpen(true);
+    
+    if (action === 'view') {
+      // Convert the inspection data to the format expected by InspectionDetailsPanel
+      const inspectionDetails = {
+        shopName: inspection.shopName,
+        shopId: `SH-${inspection.id}`,
+        inspector: "Current User", // Default to current user instead of specific inspector
+        date: inspection.date,
+        status: inspection.ranking,
+        cleanliness: inspection.ranking === 'A' ? 4.5 : 
+                    inspection.ranking === 'B' ? 3.5 : 
+                    inspection.ranking === 'C' ? 2.5 : 1.5,
+        documentation: inspection.ranking === 'A' ? 100 : 
+                      inspection.ranking === 'B' ? 85 : 
+                      inspection.ranking === 'C' ? 70 : 55,
+        staffTraining: inspection.ranking === 'A' || inspection.ranking === 'B',
+        highlights: [
+          "Health and safety compliance in good standing",
+          `Inspection conducted in ${inspection.gnDivision} area`,
+          inspection.ranking === 'A' ? "Excellent food handling practices" : 
+          inspection.ranking === 'B' ? "Good food handling practices" : 
+          "Standard food handling practices"
+        ],
+        recommendations: [
+          inspection.ranking === 'A' ? "Continue maintaining high standards" : 
+          inspection.ranking === 'B' ? "Minor improvements needed in documentation" : 
+          inspection.ranking === 'C' ? "Significant improvements needed in cleanliness" :
+          "Major improvements required across all areas",
+          "Follow up inspection scheduled as per protocol"
+        ],
+        inspectorNotes: `Inspection conducted on ${inspection.date} in ${inspection.gnDivision}.`,
+        attachments: inspection.ranking === 'A' || inspection.ranking === 'B' ? 
+          ["Inspection_Certificate.pdf", "Compliance_Document.pdf"] : 
+          ["Improvement_Notice.pdf"]
+      };
+      
+      setViewInspectionData(inspectionDetails);
+      setDetailsPanelOpen(true);
+    } else {
+      setDialogMode(action);
+      setDialogOpen(true);
+    }
+  };
+
+  // Handle close of inspection details panel
+  const handleDetailsPanelClose = () => {
+    setDetailsPanelOpen(false);
+    setViewInspectionData(null);
   };
 
   // Clear all filters
@@ -167,6 +235,7 @@ export const InspectionLog = () => {
     setSearchQuery('');
     setRankingFilter('All');
     setFilterDate('October 2024');
+    setFilterShop(null);
   };
 
   // Handle dialog close
@@ -238,212 +307,237 @@ export const InspectionLog = () => {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        {/* Header */}
-        <Header pageTitle="Inspection Log" />
-        
-        {/* Inspection Log Content */}
-        <Box sx={{ p: 4, flexGrow: 1 }}>
-          {/* Toolbar with search and filters */}
-          <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* Left Side - Search */}
-            <TextField
-              placeholder="Search by Shop, Inspector or ID"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              variant="outlined"
-              size="small"
-              sx={{ minWidth: { xs: '100%', md: 300 } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery('')}>
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-            />
+        {/* Show details panel if open, otherwise show the normal view */}
+        {detailsPanelOpen && viewInspectionData ? (
+          <InspectionDetailsPanel 
+            isOpen={detailsPanelOpen}
+            onClose={handleDetailsPanelClose}
+            inspectionData={viewInspectionData}
+          />
+        ) : (
+          <>
+            {/* Header */}
+            <Header pageTitle="Inspection Log" />
             
-            {/* Right Side - Filters and Actions */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Date Filter */}
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel id="date-filter-label">Date</InputLabel>
-                <Select
-                  labelId="date-filter-label"
-                  value={filterDate}
-                  label="Date"
-                  onChange={(e) => setFilterDate(e.target.value)}
-                >
-                  {AVAILABLE_MONTHS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            {/* Inspection Log Content */}
+            <Box sx={{ p: 4, flexGrow: 1 }}>
+              {/* Toolbar with search and filters */}
+              <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Left Side - Search */}
+                <TextField
+                  placeholder="Search by Shop, GN Division or ID"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  sx={{ minWidth: { xs: '100%', md: 300 } }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchQuery && (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => setSearchQuery('')}>
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+                
+                {/* Right Side - Filters and Actions */}
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Shop Filter */}
+                  <Autocomplete
+                    size="small"
+                    sx={{ minWidth: 200 }}
+                    options={SHOP_OPTIONS}
+                    getOptionLabel={(option) => option.name}
+                    value={filterShop}
+                    onChange={(event, newValue) => {
+                      setFilterShop(newValue);
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Shop" variant="outlined" />
+                    )}
+                  />
+                  
+                  {/* Date Filter */}
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id="date-filter-label">Date</InputLabel>
+                    <Select
+                      labelId="date-filter-label"
+                      value={filterDate}
+                      label="Date"
+                      onChange={(e) => setFilterDate(e.target.value)}
+                    >
+                      {AVAILABLE_MONTHS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  
+                  {/* Ranking Filter */}
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id="ranking-filter-label">Ranking</InputLabel>
+                    <Select
+                      labelId="ranking-filter-label"
+                      value={rankingFilter}
+                      label="Ranking"
+                      onChange={(e) => setRankingFilter(e.target.value)}
+                    >
+                      {RANKING_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  
+                  {/* Clear Filters Button */}
+                  {(searchQuery || rankingFilter !== 'All' || filterShop) && (
+                    <Button 
+                      variant="outlined" 
+                      size="small" 
+                      startIcon={<ClearIcon />}
+                      onClick={clearFilters}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                  
+                  {/* Add New Inspection Button */}
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate('/inspection-form')}
+                  >
+                    New Inspection
+                  </Button>
+                </Box>
+              </Box>
               
-              {/* Ranking Filter */}
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel id="ranking-filter-label">Ranking</InputLabel>
-                <Select
-                  labelId="ranking-filter-label"
-                  value={rankingFilter}
-                  label="Ranking"
-                  onChange={(e) => setRankingFilter(e.target.value)}
-                >
-                  {RANKING_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Divider sx={{ mb: 3 }} />
               
-              {/* Clear Filters Button */}
-              {(searchQuery || rankingFilter !== 'All') && (
-                <Button 
-                  variant="outlined" 
-                  size="small" 
-                  startIcon={<ClearIcon />}
-                  onClick={clearFilters}
-                >
-                  Clear Filters
-                </Button>
-              )}
+              {/* Results Count */}
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Showing {filteredData.length} {filteredData.length === 1 ? 'result' : 'results'}
+                  {searchQuery && <span> for "{searchQuery}"</span>}
+                  {rankingFilter !== 'All' && <span> with ranking {rankingFilter}</span>}
+                  {filterShop && <span> for shop {filterShop.name}</span>}
+                </Typography>
+              </Box>
               
-              {/* Add New Inspection Button */}
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/add-inspection')}
-              >
-                New Inspection
-              </Button>
-            </Box>
-          </Box>
-          
-          <Divider sx={{ mb: 3 }} />
-          
-          {/* Results Count */}
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Showing {filteredData.length} {filteredData.length === 1 ? 'result' : 'results'}
-              {searchQuery && <span> for "{searchQuery}"</span>}
-              {rankingFilter !== 'All' && <span> with ranking {rankingFilter}</span>}
-            </Typography>
-          </Box>
-          
-          {/* Table */}
-          <TableContainer component={Paper} elevation={0} sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
-            <Table sx={{ minWidth: 650 }} size="medium">
-              <TableHead sx={{ bgcolor: 'background.paper' }}>
-                <TableRow>
-                  <SortableTableCell label="Reference ID" field="id" />
-                  <SortableTableCell label="Date" field="date" />
-                  <SortableTableCell label="Shop Name" field="shopName" />
-                  <SortableTableCell label="Inspector" field="inspector" />
-                  <SortableTableCell label="GN Division" field="gnDivision" />
-                  <SortableTableCell label="Ranking" field="ranking" />
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((inspection) => {
-                    const rankingStyle = getRankingColor(inspection.ranking);
-                    return (
-                      <TableRow 
-                        key={inspection.id}
-                        sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
-                      >
-                        <TableCell sx={{ fontWeight: 500 }}>#{inspection.id}</TableCell>
-                        <TableCell>{inspection.date}</TableCell>
-                        <TableCell sx={{ fontWeight: 500 }}>{inspection.shopName}</TableCell>
-                        <TableCell>{inspection.inspector}</TableCell>
-                        <TableCell>{inspection.gnDivision}</TableCell>
-                        <TableCell>
-                          <Chip
-                            icon={rankingStyle.icon}
-                            label={inspection.ranking}
-                            size="small"
-                            sx={{
-                              backgroundColor: rankingStyle.bgColor,
-                              color: rankingStyle.color,
-                              fontWeight: 600,
-                              '& .MuiChip-icon': {
-                                color: rankingStyle.color
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                            <Tooltip title="View Details">
-                              <IconButton 
+              {/* Table */}
+              <TableContainer component={Paper} elevation={0} sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
+                <Table sx={{ minWidth: 650 }} size="medium">
+                  <TableHead sx={{ bgcolor: 'background.paper' }}>
+                    <TableRow>
+                      <SortableTableCell label="Reference ID" field="id" />
+                      <SortableTableCell label="Date" field="date" />
+                      <SortableTableCell label="Shop Name" field="shopName" />
+                      <SortableTableCell label="GN Division" field="gnDivision" />
+                      <SortableTableCell label="Ranking" field="ranking" />
+                      <TableCell align="center">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredData.length > 0 ? (
+                      filteredData.map((inspection) => {
+                        const rankingStyle = getRankingColor(inspection.ranking);
+                        return (
+                          <TableRow 
+                            key={inspection.id}
+                            sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+                          >
+                            <TableCell sx={{ fontWeight: 500 }}>#{inspection.id}</TableCell>
+                            <TableCell>{inspection.date}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>{inspection.shopName}</TableCell>
+                            <TableCell>{inspection.gnDivision}</TableCell>
+                            <TableCell>
+                              <Chip
+                                icon={rankingStyle.icon}
+                                label={inspection.ranking}
+                                size="small"
+                                sx={{
+                                  backgroundColor: rankingStyle.bgColor,
+                                  color: rankingStyle.color,
+                                  fontWeight: 600,
+                                  '& .MuiChip-icon': {
+                                    color: rankingStyle.color
+                                  }
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                <Tooltip title="View Details">
+                                  <IconButton 
+                                    size="small" 
+                                    color="primary"
+                                    onClick={() => handleAction('view', inspection)}
+                                  >
+                                    <ViewIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit Inspection">
+                                  <IconButton 
+                                    size="small" 
+                                    color="warning"
+                                    onClick={() => handleAction('edit', inspection)}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                  <IconButton 
+                                    size="small" 
+                                    color="error"
+                                    onClick={() => handleAction('delete', inspection)}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                            <AssignmentIcon sx={{ fontSize: 40, color: 'text.disabled' }} />
+                            <Typography variant="h6" color="text.secondary">No inspections found</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Try adjusting your search or filters to find what you're looking for
+                            </Typography>
+                            {(searchQuery || rankingFilter !== 'All' || filterShop) && (
+                              <Button 
+                                variant="outlined" 
                                 size="small" 
-                                color="primary"
-                                onClick={() => handleAction('view', inspection)}
+                                onClick={clearFilters}
+                                sx={{ mt: 1 }}
                               >
-                                <ViewIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Edit Inspection">
-                              <IconButton 
-                                size="small" 
-                                color="warning"
-                                onClick={() => handleAction('edit', inspection)}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton 
-                                size="small" 
-                                color="error"
-                                onClick={() => handleAction('delete', inspection)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                                Clear Filters
+                              </Button>
+                            )}
                           </Box>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                        <AssignmentIcon sx={{ fontSize: 40, color: 'text.disabled' }} />
-                        <Typography variant="h6" color="text.secondary">No inspections found</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Try adjusting your search or filters to find what you're looking for
-                        </Typography>
-                        {(searchQuery || rankingFilter !== 'All') && (
-                          <Button 
-                            variant="outlined" 
-                            size="small" 
-                            onClick={clearFilters}
-                            sx={{ mt: 1 }}
-                          >
-                            Clear Filters
-                          </Button>
-                        )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </>
+        )}
       </Box>
       
       {/* View/Edit/Delete Dialog */}
@@ -484,15 +578,6 @@ export const InspectionLog = () => {
                   label="Shop Name"
                   fullWidth
                   value={selectedInspection.shopName}
-                  disabled={dialogMode === 'view'}
-                  margin="dense"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Inspector"
-                  fullWidth
-                  value={selectedInspection.inspector}
                   disabled={dialogMode === 'view'}
                   margin="dense"
                 />

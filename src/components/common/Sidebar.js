@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -7,7 +7,15 @@ import {
   ListItem, 
   ListItemIcon, 
   ListItemText,
-  useTheme
+  useTheme,
+  Drawer,
+  ListItemButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -18,12 +26,57 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { alpha } from '@mui/material/styles';
 import logoImage from '../../assets/logo.png';
+import Logo from '../../assets/Logo';
 
 const Sidebar = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+
+  const handleLogout = () => {
+    try {
+      // Close the dialog
+      setLogoutDialogOpen(false);
+      
+      // Clear auth data directly
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      sessionStorage.clear();
+      
+      // Navigate directly without using the external function
+      // that might be causing loops
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Emergency fallback
+      window.location.href = '/';
+    }
+  };
+
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  useEffect(() => {
+    // Add the fade-out animation CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      .fade-out {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   
   // Determine active route for highlighting
   const getActiveRoute = () => {
@@ -88,12 +141,6 @@ const Sidebar = () => {
       path: '/settings', 
       id: 'settings' 
     },
-    { 
-      text: 'Logout', 
-      icon: <LogoutIcon />, 
-      path: '/logout', 
-      id: 'logout' 
-    },
   ];
   
   const handleNavigation = (path) => {
@@ -101,7 +148,8 @@ const Sidebar = () => {
   };
 
   return (
-    <Box
+    <Drawer
+      variant="permanent"
       sx={{
         width: 250,
         height: '100%',
@@ -209,7 +257,67 @@ const Sidebar = () => {
           </ListItem>
         ))}
       </List>
-    </Box>
+
+      <Box sx={{ flexGrow: 1 }} />
+      <Divider sx={{ my: 1 }} />
+      
+      <ListItem 
+        disablePadding 
+        sx={{ 
+          mt: 'auto',
+          mb: 2
+        }}
+      >
+        <ListItemButton
+          onClick={handleLogoutClick}
+          sx={{
+            borderRadius: 1,
+            backgroundColor: (theme) => alpha(theme.palette.error.main, 0.1),
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor: (theme) => alpha(theme.palette.error.main, 0.2),
+            },
+            py: 1,
+            mb: 1
+          }}
+        >
+          <ListItemIcon sx={{ color: 'error.main', minWidth: 40 }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText 
+            primary="Logout" 
+            primaryTypographyProps={{ 
+              fontWeight: 'medium',
+              fontSize: '0.9rem'
+            }} 
+          />
+        </ListItemButton>
+      </ListItem>
+
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        aria-labelledby="logout-dialog-title"
+      >
+        <DialogTitle id="logout-dialog-title">
+          Confirm Logout
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+            <Logo width={60} height={60} />
+            <DialogContentText sx={{ mt: 2, textAlign: 'center' }}>
+              Are you sure you want to log out of SafeTrack?
+            </DialogContentText>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogoutDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleLogout} color="error" variant="contained" autoFocus>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Drawer>
   );
 };
 
