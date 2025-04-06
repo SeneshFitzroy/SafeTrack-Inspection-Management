@@ -146,7 +146,8 @@ function App() {
         <CssBaseline />
         <Router>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<ChatbotPage />} />
+            <Route path="/ai-assistant" element={<ChatbotPage />} />
             <Route 
               path="/dashboard" 
               element={
@@ -200,10 +201,6 @@ function App() {
               element={
                 localStorage.getItem('authToken') ? <InspectionDetailsPanel /> : <Navigate to="/" replace />
               }
-            />
-            <Route 
-              path="/ai-assistant" 
-              element={<ChatbotPage />} 
             />
           </Routes>
         </Router>
