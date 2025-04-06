@@ -725,8 +725,25 @@ const Dashboard = () => {
                     action={
                       <Tooltip title="Geographic distribution">
                         <IconButton size="small">
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
+                    sx={{ p: { xs: 2, md: 2.5 }, pb: { xs: 1.5, md: 2 } }} // Increased padding
+                  />
+                  <Divider />
+                  <Box sx={{ 
+                    p: { xs: 2, md: 2.5 }, 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2
+                  }}>
+                    {additionalData.shopsByDivision.map((item, index) => (
+                      <Box key={item.division} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="body2" fontWeight="bold">{item.division}</Typography>
+                        <IconButton size="small">
                           <Typography variant="body2" fontWeight="bold">{item.count}</Typography>
-                        </Box>
+                        </IconButton>
                         <LinearProgress 
                           variant="determinate" 
                           value={(item.count / dashboardData.totalShops) * 100} 
