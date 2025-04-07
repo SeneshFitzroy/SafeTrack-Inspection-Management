@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -12,7 +12,9 @@ import {
   Chip,
   Card,
   CardContent,
-  alpha
+  alpha,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,6 +33,7 @@ import Sidebar from '../common/Sidebar';
 import EditPersonalInfo from './EditPersonalInfo';
 import EditWorkInfo from './EditWorkInfo';
 import ChangePassword from './ChangePassword';
+import { getCurrentUser, updateProfile, changePassword } from '../../services/authService';
 
 // Styled components
 const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -147,19 +150,26 @@ const Profile = () => {
   // Sample user data
   const [userData, setUserData] = useState({
     personalInfo: {
-      phID: '12453778',
-      fullName: 'Leo Perera',
-      nic: '7430930929202V',
-      role: 'PHI',
-      phoneNumber: '0765940394',
-      email: 'leoperera@gmail.com',
-      address: '67, Colombo north, colombo',
+      phID: '',
+      fullName: '',
+      nic: '',
+      role: '',
+      phoneNumber: '',
+      email: '',
+      address: '',
     },
     workInfo: {
-      district: 'Colombo',
-      officeLocation: '456/A colombo rd, Kottawa',
-      gramaNiladhari: ['Kadawatha', 'Kottawa', 'Biyagama'],
+      district: '',
+      officeLocation: '',
+      gramaNiladhari: [],
     },
+  });
+
+  // Snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
   });
 
   // Modal states
@@ -167,37 +177,130 @@ const Profile = () => {
   const [openWorkEdit, setOpenWorkEdit] = useState(false);
   const [openPasswordChange, setOpenPasswordChange] = useState(false);
 
+  // Fetch user data on component mount
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      // Map backend user data to frontend format
+      setUserData({
+        personalInfo: {
+          phID: user.phiId || '',
+          fullName: user.name || '',
+          nic: user.nic || '',
+          role: user.role || 'PHI',
+          phoneNumber: user.phone || '',
+          email: user.email || '',
+          address: user.address || '',
+        },
+        workInfo: {
+          district: user.district || '',
+          officeLocation: user.officeLocation || '',
+          gramaNiladhari: user.divisions ? user.divisions.split(',').map(d => d.trim()) : [],
+        },
+      });
+    }
+  }, []);
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   // Personal info edit handlers
   const handlePersonalEditOpen = () => setOpenPersonalEdit(true);
   const handlePersonalEditClose = () => setOpenPersonalEdit(false);
-  const handlePersonalInfoUpdate = (updatedInfo) => {
-    setUserData(prev => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        ...updatedInfo
-      }
-    }));
-    handlePersonalEditClose();
+  const handlePersonalInfoUpdate = async (updatedInfo) => {
+    try {
+      await updateProfile(updatedInfo);
+      // Update local state
+      setUserData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          ...updatedInfo
+        }
+      }));
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Personal information updated successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating personal info:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to update personal information',
+        severity: 'error'
+      });
+    } finally {
+      handlePersonalEditClose();
+    }
   };
 
   // Work info edit handlers
   const handleWorkEditOpen = () => setOpenWorkEdit(true);
   const handleWorkEditClose = () => setOpenWorkEdit(false);
-  const handleWorkInfoUpdate = (updatedInfo) => {
-    setUserData(prev => ({
-      ...prev,
-      workInfo: {
-        ...prev.workInfo,
-        ...updatedInfo
-      }
-    }));
-    handleWorkEditClose();
+  const handleWorkInfoUpdate = async (updatedInfo) => {
+    try {
+      await updateProfile(updatedInfo);
+      // Update local state
+      setUserData(prev => ({
+        ...prev,
+        workInfo: {
+          ...prev.workInfo,
+          ...updatedInfo
+        }
+      }));
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Work information updated successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating work info:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to update work information',
+        severity: 'error'
+      });
+    } finally {
+      handleWorkEditClose();
+    }
   };
 
   // Password change handlers
   const handlePasswordChangeOpen = () => setOpenPasswordChange(true);
   const handlePasswordChangeClose = () => setOpenPasswordChange(false);
+  const handlePasswordChange = async (passwordData) => {
+    try {
+      await changePassword(passwordData);
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Password changed successfully',
+        severity: 'success'
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to change password',
+        severity: 'error'
+      });
+      
+      return {
+        success: false,
+        message: typeof error === 'string' ? error : 'Failed to change password'
+      };
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#f5f8fb' }}>
@@ -447,7 +550,24 @@ const Profile = () => {
       <ChangePassword
         open={openPasswordChange}
         handleClose={handlePasswordChangeClose}
+        onChangePassword={handlePasswordChange}
       />
+      
+      {/* Snackbar for notifications */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

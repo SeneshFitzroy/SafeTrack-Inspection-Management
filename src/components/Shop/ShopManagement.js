@@ -51,17 +51,13 @@ import AddShopForm from './AddShopForm';
 import ViewShopDetails from './ViewShopDetails';
 import EditShopForm from './EditShopForm';
 
-// Sample shop data
-const MOCK_SHOP_DATA = [
-  { id: '13236', name: 'ABC Cafe & Bakery', address: '585 Makola North Makola', owner: 'Kasun Perera', telephone: '0717494743', licenseNo: '26497833', employees: 35, gnDivision: 'Biyagama', category: 'Food', status: 'Active' },
-  { id: '13237', name: 'Sunrise Groceries', address: '23 Main Street, Kaduwela', owner: 'Priya Mendis', telephone: '0767832156', licenseNo: '27584933', employees: 12, gnDivision: 'Kaduwela', category: 'Groceries', status: 'Active' },
-  { id: '13238', name: 'Golden Spoon Bakery', address: '112 Temple Road, Kelaniya', owner: 'Nuwan Silva', telephone: '0719467821', licenseNo: '29674521', employees: 18, gnDivision: 'Kelaniya', category: 'Food', status: 'Active' },
-  { id: '13239', name: 'SwiftTech Electronics', address: '45 Station Road, Kolonnawa', owner: 'Samantha Fernando', telephone: '0776542198', licenseNo: '31452789', employees: 23, gnDivision: 'Kolonnawa', category: 'Electronics', status: 'Active' },
-  { id: '13240', name: 'Urban Trends Clothing', address: '78 High Street, Kaduwela', owner: 'Dinesh Rajapaksa', telephone: '0723456789', licenseNo: '28976543', employees: 15, gnDivision: 'Kaduwela', category: 'Retail', status: 'Inactive' },
-  { id: '13241', name: 'Wellness Pharmacy', address: '34 Hospital Road, Biyagama', owner: 'Dilshan Perera', telephone: '0712345678', licenseNo: '25764321', employees: 8, gnDivision: 'Biyagama', category: 'Healthcare', status: 'Active' },
-  { id: '13242', name: 'Fresh Market Groceries', address: '56 Market Street, Kelaniya', owner: 'Amali Jayawardena', telephone: '0765432198', licenseNo: '29876543', employees: 20, gnDivision: 'Kelaniya', category: 'Groceries', status: 'Active' },
-  { id: '13243', name: 'Tasty Delights Restaurant', address: '89 Food Avenue, Biyagama', owner: 'Ruwan Senaratne', telephone: '0719876543', licenseNo: '26543219', employees: 28, gnDivision: 'Biyagama', category: 'Food', status: 'Active' },
-];
+// Import shop service
+import { 
+  getAllShops, 
+  createShop, 
+  updateShop, 
+  deleteShop 
+} from '../../services/shopService';
 
 // Filter options
 const GN_DIVISIONS = ['All', 'Biyagama', 'Kaduwela', 'Kelaniya', 'Kolonnawa'];
@@ -71,8 +67,8 @@ const ShopManagement = () => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const [shops, setShops] = useState(MOCK_SHOP_DATA);
-  const [filteredShops, setFilteredShops] = useState(MOCK_SHOP_DATA);
+  const [shops, setShops] = useState([]);
+  const [filteredShops, setFilteredShops] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [gnDivisionFilter, setGnDivisionFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -115,6 +111,27 @@ const ShopManagement = () => {
     open: false,
     type: null, // 'add', 'view', 'edit'
   });
+
+  useEffect(() => {
+    const fetchShops = async () => {
+      setLoading(true);
+      try {
+        const fetchedShops = await getAllShops();
+        setShops(fetchedShops);
+      } catch (error) {
+        console.error('Error fetching shops:', error);
+        setSnackbar({
+          open: true,
+          message: 'Failed to load shops',
+          severity: 'error'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchShops();
+  }, []);
 
   useEffect(() => {
     const totalShops = shops.length;
@@ -294,47 +311,37 @@ const ShopManagement = () => {
     setSelectedShop(null);
   };
 
-  const handleSaveNewShop = (shopData) => {
+  const handleSaveNewShop = async (shopData) => {
     setLoading(true);
     
-    setTimeout(() => {
-      const newShop = {
-        id: `${Math.floor(10000 + Math.random() * 90000)}`,
-        name: shopData.establishmentName,
-        address: shopData.address,
-        owner: shopData.ownerName,
-        telephone: shopData.telephoneNo,
-        licenseNo: shopData.licenseNumber,
-        employees: parseInt(shopData.numberOfEmployees, 10),
-        gnDivision: shopData.gnRegion,
-        category: shopData.tradeType,
-        status: 'Active',
-        nicNumber: shopData.nicNumber,
-        businessRegNo: shopData.businessRegNo,
-        district: shopData.district,
-        phiArea: shopData.phiArea,
-        privateAddress: shopData.privateAddress,
-        licenseYear: shopData.licenseYear
-      };
-      
+    try {
+      const newShop = await createShop(shopData);
       setShops([...shops, newShop]);
       setSnackbar({
         open: true,
         message: 'Shop added successfully!',
         severity: 'success'
       });
-      
       handleCloseForm();
+    } catch (error) {
+      console.error('Error adding shop:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to add shop',
+        severity: 'error'
+      });
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
-  const handleSaveUpdatedShop = (updatedShop) => {
+  const handleSaveUpdatedShop = async (updatedShopData) => {
     setLoading(true);
     
-    setTimeout(() => {
+    try {
+      const updatedShop = await updateShop(updatedShopData._id, updatedShopData);
       const updatedShops = shops.map(shop => 
-        shop.id === updatedShop.id ? updatedShop : shop
+        shop._id === updatedShop._id ? updatedShop : shop
       );
       
       setShops(updatedShops);
@@ -343,10 +350,40 @@ const ShopManagement = () => {
         message: 'Shop updated successfully!',
         severity: 'success'
       });
-      
       handleCloseForm();
+    } catch (error) {
+      console.error('Error updating shop:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to update shop',
+        severity: 'error'
+      });
+    } finally {
       setLoading(false);
-    }, 800);
+    }
+  };
+
+  const handleDeleteShop = async (shopId) => {
+    setLoading(true);
+    
+    try {
+      await deleteShop(shopId);
+      setShops(shops.filter(shop => shop._id !== shopId));
+      setSnackbar({
+        open: true,
+        message: 'Shop deleted successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error deleting shop:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to delete shop',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExportShopPdf = () => {

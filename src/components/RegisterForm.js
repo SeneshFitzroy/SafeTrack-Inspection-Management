@@ -22,6 +22,7 @@ import {
   Modal,
 } from "@mui/material";
 import logo from '../assets/logo.png';
+import { register } from '../services/authService';
 
 // Custom Eye Icons for password visibility
 const VisibilityIcon = () => (
@@ -178,10 +179,7 @@ const RegisterForm = ({ open, onClose }) => {
     return Object.keys(errors).length === 0;
   };
   
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Final validation of all fields
+  const validateAllFields = () => {
     const allErrors = {};
     
     // Personal Details
@@ -221,14 +219,30 @@ const RegisterForm = ({ open, onClose }) => {
     }
     
     setFormErrors(allErrors);
+    return allErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // If not the last step, move to next step
+    if (activeStep < steps.length - 1) {
+      const validationErrors = validateStep(activeStep);
+      if (Object.keys(validationErrors).length === 0) {
+        setActiveStep(activeStep + 1);
+      }
+      return;
+    }
+    
+    // Validate all fields on final submission
+    const allErrors = validateAllFields();
     
     if (Object.keys(allErrors).length === 0) {
-      // Simulate registration process
-      setIsLoading(true);
-      
-      // Mock API call
-      setTimeout(() => {
-        setIsLoading(false);
+      try {
+        setIsLoading(true);
+        
+        // Register user via API
+        await register(formData);
         
         // Success message
         setSnackbar({
@@ -252,9 +266,18 @@ const RegisterForm = ({ open, onClose }) => {
           confirmPassword: '',
         });
         setActiveStep(0);
-      }, 2000);
-    } else {
-      setFormError('Please correct the errors before submitting');
+        
+        // Close the registration form after a delay
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        setFormError(typeof error === 'string' ? error : 'Registration failed. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 

@@ -52,6 +52,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 import InspectionDetailsPanel from '../Inspection/InspectionDetailsPanel';
+import { getAllInspections, getInspectionById } from '../../services/inspectionService';
+import { getAllShops } from '../../services/shopService';
 
 // Enhanced mock data with consistent date ranges spanning different months
 const MOCK_INSPECTION_DATA = [
@@ -361,14 +363,44 @@ export const InspectionLog = () => {
   );
 
   useEffect(() => {
-    const formattedInspections = MOCK_INSPECTION_DATA.map(inspection => ({
-      ...inspection,
-      dateForFilter: formatFilterDate(inspection.date),
-      displayDate: formatDisplayDate(inspection.date)
-    }));
-    setInspectionData(formattedInspections);
-    setFilteredData(formattedInspections);
+    const fetchData = async () => {
+      try {
+        const [inspections, shops] = await Promise.all([
+          getAllInspections(),
+          getAllShops()
+        ]);
+        
+        setInspectionData(inspections);
+        setFilteredData(inspections);
+        
+        // Update shops list if needed
+        if (shops && shops.length > 0) {
+          // Convert shops to format needed for filtering
+          const formattedShops = shops.map(shop => ({
+            id: shop._id,
+            name: shop.name
+          }));
+          // You might want to update your SHOPS constant or create a state variable
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Show error message to user
+      }
+    };
+    
+    fetchData();
   }, []);
+
+  const handleViewInspection = async (id) => {
+    try {
+      const inspectionDetails = await getInspectionById(id);
+      setViewInspectionData(inspectionDetails);
+      setDetailsPanelOpen(true);
+    } catch (error) {
+      console.error('Error fetching inspection details:', error);
+      // Show error message to user
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F5F8FF' }}>
@@ -557,7 +589,7 @@ export const InspectionLog = () => {
                                   <IconButton 
                                     size="small" 
                                     color="primary"
-                                    onClick={() => handleAction('view', inspection)}
+                                    onClick={() => handleViewInspection(inspection.id)}
                                   >
                                     <ViewIcon fontSize="small" />
                                   </IconButton>

@@ -90,8 +90,17 @@ const HomePage = () => {
       navigate('/dashboard');
     }
     
+    // Check for session expired flag
+    if (sessionStorage.getItem('sessionExpired') === 'true') {
+      setLogoutAlert({
+        show: true,
+        message: "Your session has expired. Please log in again."
+      });
+      sessionStorage.removeItem('sessionExpired');
+    }
+    
     // Enhanced logout message with timestamp
-    if (sessionStorage.getItem('loggedOut') === 'true') {
+    else if (sessionStorage.getItem('loggedOut') === 'true') {
       const logoutTime = sessionStorage.getItem('logoutTime');
       let message = "You have been successfully logged out.";
       

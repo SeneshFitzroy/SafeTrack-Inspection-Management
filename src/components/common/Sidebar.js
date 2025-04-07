@@ -30,6 +30,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { alpha } from '@mui/material/styles';
 import logoImage from '../../assets/logo.png';
 import Logo from '../../assets/Logo';
+import { logout } from '../../services/authService';
 
 const Sidebar = () => {
   const theme = useTheme();
@@ -39,11 +40,7 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     // First clear all authentication data
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('user');
-    
-    // Set the logged out flag
-    sessionStorage.setItem('loggedOut', 'true');
+    logout();
     
     // Use direct window location change to force a complete page reload
     // This is more reliable than navigate() for logout scenarios

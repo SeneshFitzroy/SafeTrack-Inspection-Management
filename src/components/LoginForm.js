@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import logo from '../assets/logo.png';
+import { login } from '../services/authService';
 
 // Simple Eye Icons since we can't import from MUI icons
 const VisibilityIcon = () => (
@@ -67,7 +68,6 @@ const LoginForm = ({ open, onClose, onLoginSuccess }) => {
   };
 
   const handleLogin = async () => {
-    // For demo purposes - in a real app would verify with backend
     try {
       // Validate inputs
       if (!username || !password) {
@@ -77,31 +77,32 @@ const LoginForm = ({ open, onClose, onLoginSuccess }) => {
       
       setIsLoading(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Call the login API
+      const response = await login(username, password);
       
-      // Store authentication data
-      localStorage.setItem('authToken', 'demo-token-123456');
-      localStorage.setItem('userData', JSON.stringify({
-        name: 'John Doe',
-        email: username,
-        role: 'inspector'
-      }));
+      if (!response || !response.token) {
+        throw new Error('Invalid response from server');
+      }
+      
+      // Verify token is stored
+      const storedToken = localStorage.getItem('authToken');
+      if (!storedToken) {
+        throw new Error('Failed to store authentication token');
+      }
       
       // Close login form
       onClose();
       
-      // Notify parent component of successful login
+      // Notify parent component of successful login or redirect
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
-        // Fallback direct redirection if the parent callback doesn't work
         window.location.href = '/dashboard';
       }
       
     } catch (error) {
-      console.error('Login error:', error);
-      setFormError('Authentication failed. Please try again.');
+      console.error('Login failed:', error);
+      setFormError(typeof error === 'string' ? error : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
