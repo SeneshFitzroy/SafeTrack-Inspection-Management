@@ -1,10 +1,15 @@
-require('dotenv').config({ path: '../.env' });
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+import dotenv from 'dotenv';
+dotenv.config({ path: '../.env' });
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import userRoutes from './routes/userRoutes.js';
+import shopRoutes from './routes/shopRoutes.js';
+import inspectionRoutes from './routes/inspectionRoutes.js';
+import taskRoutes from './routes/taskRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; // Changed to 5001 to avoid conflicts
 
 // Check for critical environment variables
 if (!process.env.MONGODB_URI) {
@@ -40,7 +45,10 @@ const connectDB = async () => {
 connectDB();
 
 // Define Routes
-app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/users', userRoutes);
+app.use('/api/shops', shopRoutes);
+app.use('/api/inspections', inspectionRoutes);
+app.use('/api/tasks', taskRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
@@ -52,4 +60,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-module.exports = app;
+export default app;

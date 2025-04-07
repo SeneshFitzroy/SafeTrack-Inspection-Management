@@ -23,7 +23,10 @@ import {
   Select,
   Fab,
   Chip,
-  Tooltip
+  Tooltip,
+  CircularProgress,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
@@ -42,6 +45,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 import './Calendar.css';
+import * as calendarService from '../../services/calendarService';
 
 // Renamed component from CalendarDashboard to Calendar
 export const Calendar = () => {
@@ -62,13 +66,15 @@ export const Calendar = () => {
     date: new Date()
   });
   
-  // Sample tasks data
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'Food Inspection', location: 'Golden Restaurant', time: '10:00 AM', status: 'pending', date: new Date(2023, 10, 15) },
-    { id: 2, title: 'Follow-up Visit', location: 'City Bakery', time: '02:00 PM', status: 'completed', date: new Date(2023, 10, 17) },
-    { id: 3, title: 'Routine Check', location: 'Fresh Market', time: '09:30 AM', status: 'overdue', date: new Date(2023, 10, 10) },
-    { id: 4, title: 'Complaint Investigation', location: 'Ocean Seafood', time: '01:00 PM', status: 'pending', date: new Date(2023, 10, 22) }
-  ]);
+  // Add loading and error states for API calls
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Day names - using Monday as first day of week
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -78,6 +84,36 @@ export const Calendar = () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const data = await calendarService.getAllTask();
+      // Convert dates from strings to Date objects
+      const formattedTasks = data.map(task => ({
+        ...task,
+        date: new Date(task.date)
+      }));
+      setTasks(formattedTasks);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setError('Failed to fetch tasks. Please try again.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch tasks. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load tasks when component mounts
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   // Navigation functions
   const handleNavClick = (pageName) => {
@@ -242,9 +278,15 @@ export const Calendar = () => {
     }
   };
 
-  // Task management
+  // Task management - Updated to use API
   const handleOpenTaskDialog = (date) => {
-    setNewTask({ ...newTask, date: date });
+    setNewTask({ 
+      title: '',
+      location: '',
+      time: '',
+      status: 'pending',
+      date: date 
+    });
     setTaskDialogOpen(true);
   };
 
@@ -261,20 +303,48 @@ export const Calendar = () => {
     setNewTask({ ...newTask, date: newDate });
   };
 
-  const handleAddTask = () => {
-    const taskToAdd = {
-      ...newTask,
-      id: tasks.length + 1,
-    };
-    setTasks([...tasks, taskToAdd]);
-    setTaskDialogOpen(false);
-    setNewTask({
-      title: '',
-      location: '',
-      time: '',
-      status: 'pending',
-      date: new Date()
-    });
+  const handleAddTask = async () => {
+    setLoading(true);
+    try {
+      // Format the date properly before sending to API
+      const formattedTaskData = {
+        ...newTask,
+        date: newTask.date instanceof Date ? newTask.date.toISOString() : newTask.date
+      };
+      
+      const response = await calendarService.createTask(formattedTaskData);
+      
+      // Add the new task to the state with the correct date format
+      const addedTask = {
+        ...response,
+        date: new Date(response.date)
+      };
+      
+      setTasks([...tasks, addedTask]);
+      setTaskDialogOpen(false);
+      setNewTask({
+        title: '',
+        location: '',
+        time: '',
+        status: 'pending',
+        date: new Date()
+      });
+      
+      setSnackbar({
+        open: true,
+        message: 'Task added successfully!',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to add task:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to add task. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Check if two dates are the same day
@@ -304,20 +374,70 @@ export const Calendar = () => {
     ));
   };
 
-  // Add function to update task status
-  const updateTaskStatus = (taskId, newStatus) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === taskId 
-          ? { ...task, status: newStatus } 
-          : task
-      )
-    );
+  // Add function to update task status - Updated to use API
+  const updateTaskStatus = async (taskId, newStatus) => {
+    setLoading(true);
+    try {
+      const taskToUpdate = tasks.find(task => task._id === taskId);
+      if (!taskToUpdate) {
+        throw new Error('Task not found');
+      }
+      
+      const updatedTask = await calendarService.updateTask(taskId, {
+        ...taskToUpdate,
+        status: newStatus
+      });
+      
+      // Update the task in the state
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task._id === taskId 
+            ? { ...task, status: newStatus } 
+            : task
+        )
+      );
+      
+      setSnackbar({
+        open: true,
+        message: 'Task status updated successfully!',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update task status. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Add function to delete a task
-  const deleteTask = (taskId) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  // Add function to delete a task - Updated to use API
+  const deleteTask = async (taskId) => {
+    setLoading(true);
+    try {
+      await calendarService.deleteTask(taskId);
+      
+      // Remove the task from the state
+      setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+      
+      setSnackbar({
+        open: true,
+        message: 'Task deleted successfully!',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete task. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Enhanced function to get upcoming tasks with more options
@@ -351,6 +471,11 @@ export const Calendar = () => {
     if (dayTasks.some(task => task.status === 'overdue')) return statusColors.overdue;
     if (dayTasks.some(task => task.status === 'pending')) return statusColors.pending;
     return statusColors.completed;
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   // Add visual indicators to the calendar based on task status
@@ -654,7 +779,7 @@ export const Calendar = () => {
     );
   };
 
-  // Enhanced TaskDetails component for better integration
+  // Enhanced TaskDetails component for better integration with API
   const TaskDetails = () => {
     const selectedDateTasks = getTasksForDate(selectedDate);
     const upcomingTasks = getUpcomingTasks();
@@ -730,7 +855,11 @@ export const Calendar = () => {
             </Box>
             
             <Box sx={{ p: 3, minHeight: 300, maxHeight: 400, overflow: 'auto' }}>
-              {selectedDateTasks.length > 0 ? (
+              {loading && selectedDateTasks.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 200 }}>
+                  <CircularProgress />
+                </Box>
+              ) : selectedDateTasks.length > 0 ? (
                 selectedDateTasks.map((task, index) => (
                   <Box 
                     key={index} 
@@ -758,7 +887,7 @@ export const Calendar = () => {
                                 'completed': 'overdue',
                                 'overdue': 'pending'
                               }[task.status];
-                              updateTaskStatus(task.id, nextStatus);
+                              updateTaskStatus(task._id, nextStatus);
                             }}
                             sx={{ 
                               backgroundColor: `${statusColors[task.status]}20`,
@@ -789,7 +918,7 @@ export const Calendar = () => {
                           color: 'error.main'
                         }
                       }}
-                      onClick={() => deleteTask(task.id)}
+                      onClick={() => deleteTask(task._id)}
                     >
                       <Tooltip title="Delete task">
                         <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -878,7 +1007,11 @@ export const Calendar = () => {
               )}
             </Box>
             <TableContainer component={Box} sx={{ p: 2, maxHeight: 400, overflow: 'auto' }}>
-              {upcomingTasks.length > 0 ? (
+              {loading && upcomingTasks.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 250 }}>
+                  <CircularProgress />
+                </Box>
+              ) : upcomingTasks.length > 0 ? (
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -927,7 +1060,7 @@ export const Calendar = () => {
                                 'completed': 'overdue',
                                 'overdue': 'pending'
                               }[task.status];
-                              updateTaskStatus(task.id, nextStatus);
+                              updateTaskStatus(task._id, nextStatus);
                             }}
                             sx={{ 
                               backgroundColor: `${statusColors[task.status]}20`,
@@ -1092,12 +1225,28 @@ export const Calendar = () => {
             onClick={handleAddTask} 
             variant="contained" 
             color="primary"
-            disabled={!newTask.title || !newTask.location || !newTask.time}
+            disabled={!newTask.title || !newTask.location || !newTask.time || loading}
           >
-            Add Task
+            {loading ? <CircularProgress size={24} /> : 'Add Task'}
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

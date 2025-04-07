@@ -44,3 +44,12 @@ export const deleteShop = async (id) => {
     throw error.response?.data?.message || 'An error occurred deleting shop';
   }
 };
+
+export const updateShopOwnership = async () => {
+  try {
+    const response = await api.post('/api/shops/update-ownership');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'An error occurred updating shop ownership';
+  }
+};

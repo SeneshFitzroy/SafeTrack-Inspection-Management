@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Grid, 
-  Card, 
-  CardContent, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Card,
+  CardContent,
   Divider,
   List,
   ListItem,
@@ -34,21 +34,28 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
   ArcElement,
-  Tooltip as ChartTooltip, 
+  Tooltip as ChartTooltip,
   Legend,
-  Title 
+  Title
 } from 'chart.js';
 import { Line, Pie } from 'react-chartjs-2';
 
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
+
+import { 
+  getAllShops, 
+} from '../../services/shopService';
+
+// Import calendar service to fetch tasks
+import * as calendarService from '../../services/calendarService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -66,6 +73,10 @@ const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const [loading, setLoading] = useState(false);
+  const [shopCount, setShopCount] = useState(0);
+  const [tasks, setTasks] = useState([]);
+  const [pendingTasksCount, setPendingTasksCount] = useState(0);
 
   // Check authentication
   useEffect(() => {
@@ -80,9 +91,92 @@ const Dashboard = () => {
     md: 2    // Increased from 1.5
   };
 
+  // Fetch shops data when component mounts
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        const response = await getAllShops();
+        setShopCount(response.length);
+      } catch (error) {
+        console.error('Error fetching shops:', error);
+      }
+    };
+
+    fetchShops();
+  }, []);
+  
+  // Fetch tasks when component mounts
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const data = await calendarService.getAllTask();
+        // Convert dates from strings to Date objects
+        const formattedTasks = data.map(task => ({
+          ...task,
+          date: new Date(task.date)
+        }));
+        setTasks(formattedTasks);
+        
+        // Count pending tasks
+        const pendingTasks = formattedTasks.filter(task => task.status === 'pending');
+        setPendingTasksCount(pendingTasks.length);
+      } catch (err) {
+        console.error('Failed to fetch tasks:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+  
+  // Task helper functions
+  const getUpcomingTasks = (days = 7) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + days);
+    
+    return tasks
+      .filter(task => {
+        const taskDate = new Date(task.date);
+        taskDate.setHours(0, 0, 0, 0); // Reset time for proper comparison
+        // Return all tasks for the next 7 days regardless of status
+        return taskDate >= today && taskDate <= endDate;
+      })
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
+  
+  const getPastTasks = (days = 7) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - days);
+    
+    return tasks
+      .filter(task => {
+        const taskDate = new Date(task.date);
+        taskDate.setHours(0, 0, 0, 0); // Reset time for proper comparison
+        return taskDate < today && taskDate >= startDate;
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
+  };
+  
+  // Format date helper
+  const formatTaskDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   // Dashboard data for metrics
   const dashboardData = {
-    totalShops: 248,
+    totalShops: shopCount,
     totalInspections: 1520,
     pendingInspections: 12,
     highRiskShops: 18,
@@ -397,25 +491,25 @@ const Dashboard = () => {
   return (
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F5F8FF' }}>
       <Sidebar />
-      
-      <Box sx={{ 
-        flex: 1, 
+
+      <Box sx={{
+        flex: 1,
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
       }}>
         <Header pageTitle="Dashboard" />
-        
+
         {/* Dashboard Content - Better spacing */}
-        <Box sx={{ 
-          p: { xs: SPACING.xs, md: SPACING.md }, 
+        <Box sx={{
+          p: { xs: SPACING.xs, md: SPACING.md },
           pb: { xs: 3, md: 4 }, // Add bottom padding
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 2, md: 3 }, // Increased gap between sections
           maxWidth: '1920px', // Set a max width that works for large screens
-          mx: 'auto', 
+          mx: 'auto',
           width: '100%',
           boxSizing: 'border-box' // Ensure padding is included in width calculation
         }}>
@@ -423,13 +517,13 @@ const Dashboard = () => {
           <Grid container spacing={{ xs: 2, md: 3 }}>
             {/* Total Shops */}
             <Grid item xs={6} sm={6} md={3}>
-              <Card sx={{ 
+              <Card sx={{
                 ...metricCardStyles,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                 color: 'white',
                 minHeight: { xs: 165, md: 185 },
               }}>
-                <CardContent sx={{ 
+                <CardContent sx={{
                   p: { xs: 2.5, md: 3 }, // Increased padding 
                   pb: { xs: '16px !important', md: '20px !important' },
                   height: '100%',
@@ -441,24 +535,24 @@ const Dashboard = () => {
                     <StoreIcon sx={{ mr: 1, fontSize: 22 }} /> {/* Smaller icon */}
                     <Typography variant="subtitle1" sx={metricTextStyles.heading}>Total Shops</Typography>
                   </Box>
-                  <Typography variant="h3" sx={{...metricTextStyles.value, my: 1 }}>{dashboardData.totalShops}</Typography>
-                  <Typography variant="body2" sx={metricTextStyles.trend}> 
+                  <Typography variant="h3" sx={{ ...metricTextStyles.value, my: 1 }}>{dashboardData.totalShops}</Typography>
+                  <Typography variant="body2" sx={metricTextStyles.trend}>
                     <TrendingUpIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.9rem' }} />
                     12% increase from last month
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            
+
             {/* Total Inspections */}
             <Grid item xs={6} sm={6} md={3}>
-              <Card sx={{ 
+              <Card sx={{
                 ...metricCardStyles,
                 background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
                 color: 'white',
                 minHeight: { xs: 165, md: 185 },
               }}>
-                <CardContent sx={{ 
+                <CardContent sx={{
                   p: { xs: 2.5, md: 3 }, // Increased padding 
                   pb: { xs: '16px !important', md: '20px !important' },
                   height: '100%',
@@ -470,24 +564,24 @@ const Dashboard = () => {
                     <AssignmentTurnedInIcon sx={{ mr: 1, fontSize: 22 }} /> {/* Smaller icon */}
                     <Typography variant="subtitle1" sx={metricTextStyles.heading}>Inspections</Typography>
                   </Box>
-                  <Typography variant="h3" sx={{...metricTextStyles.value, my: 1 }}>{dashboardData.totalInspections}</Typography>
-                  <Typography variant="body2" sx={metricTextStyles.trend}> 
+                  <Typography variant="h3" sx={{ ...metricTextStyles.value, my: 1 }}>{dashboardData.totalInspections}</Typography>
+                  <Typography variant="body2" sx={metricTextStyles.trend}>
                     <TrendingUpIcon fontSize="small" sx={{ mr: 0.5, fontSize: '0.9rem' }} />
                     8% increase from last month
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            
+
             {/* Pending Inspections */}
             <Grid item xs={6} sm={6} md={3}>
-              <Card sx={{ 
+              <Card sx={{
                 ...metricCardStyles,
                 background: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
                 color: 'white',
                 minHeight: { xs: 165, md: 185 },
               }}>
-                <CardContent sx={{ 
+                <CardContent sx={{
                   p: { xs: 2.5, md: 3 }, // Increased padding 
                   pb: { xs: '16px !important', md: '20px !important' },
                   height: '100%',
@@ -497,13 +591,13 @@ const Dashboard = () => {
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <CalendarTodayIcon sx={{ mr: 1, fontSize: 22 }} /> {/* Smaller icon */}
-                    <Typography variant="subtitle1" sx={metricTextStyles.heading}>Pending</Typography>
+                    <Typography variant="subtitle1" sx={metricTextStyles.heading}>Pending Tasks</Typography>
                   </Box>
-                  <Typography variant="h3" sx={{...metricTextStyles.value, my: 1 }}>{dashboardData.pendingInspections}</Typography>
-                  <Button 
-                    variant="contained" 
-                    size="small" 
-                    sx={{ 
+                  <Typography variant="h3" sx={{ ...metricTextStyles.value, my: 1 }}>{pendingTasksCount}</Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
                       ...primaryButtonStyles,
                       px: 2,
                       py: 0.6, // Smaller button
@@ -520,16 +614,16 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             {/* High Risk Shops */}
             <Grid item xs={6} sm={6} md={3}>
-              <Card sx={{ 
+              <Card sx={{
                 ...metricCardStyles,
                 background: `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
                 color: 'white',
                 minHeight: { xs: 165, md: 185 },
               }}>
-                <CardContent sx={{ 
+                <CardContent sx={{
                   p: { xs: 2.5, md: 3 }, // Increased padding 
                   pb: { xs: '16px !important', md: '20px !important' },
                   height: '100%',
@@ -538,29 +632,29 @@ const Dashboard = () => {
                   justifyContent: 'space-between'
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Badge 
-                      badgeContent={dashboardData.highRiskShops} 
+                    <Badge
+                      badgeContent={dashboardData.highRiskShops}
                       color="error"
-                      sx={{ 
-                        '& .MuiBadge-badge': { 
-                          bgcolor: 'white', 
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          bgcolor: 'white',
                           color: theme.palette.error.main,
                           fontWeight: 'bold',
                           fontSize: '0.75rem',
                           minWidth: 22,
                           height: 22
-                        } 
+                        }
                       }}
                     >
                       <WarningIcon sx={{ mr: 1, fontSize: 22 }} /> {/* Smaller icon */}
                     </Badge>
                     <Typography variant="subtitle1" sx={metricTextStyles.heading}>High Risk</Typography>
                   </Box>
-                  <Typography variant="h3" sx={{...metricTextStyles.value, my: 1 }}>{dashboardData.highRiskShops}</Typography>
-                  <Button 
-                    variant="contained" 
-                    size="small" 
-                    sx={{ 
+                  <Typography variant="h3" sx={{ ...metricTextStyles.value, my: 1 }}>{dashboardData.highRiskShops}</Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
                       ...primaryButtonStyles,
                       px: 2,
                       py: 0.6, // Smaller button
@@ -578,17 +672,17 @@ const Dashboard = () => {
               </Card>
             </Grid>
           </Grid>
-          
+
           {/* Charts Section - Better spacing */}
           <Grid container spacing={{ xs: 2, md: 3 }}>
             {/* Daily Inspection Rate */}
             <Grid item xs={12}>
-              <Card sx={{ 
+              <Card sx={{
                 ...cardStyles,
                 mb: { xs: 1, md: 1.5 } // Add margin bottom
               }}>
-                <CardHeader 
-                  title="Daily Inspection Rate" 
+                <CardHeader
+                  title="Daily Inspection Rate"
                   titleTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
                   action={
                     <Tooltip title="Compare with previous week">
@@ -600,7 +694,7 @@ const Dashboard = () => {
                   sx={{ p: { xs: 2, md: 2.5 }, pb: { xs: 1.5, md: 2 } }} // Increased padding
                 />
                 <Divider />
-                <Box sx={{ 
+                <Box sx={{
                   p: { xs: 2, md: 2.5 }, // Increased padding
                   height: { xs: 210, sm: 230, md: 250 } // Slightly taller
                 }}>
@@ -618,7 +712,7 @@ const Dashboard = () => {
               {/* Completion Rate */}
               <Grid item xs={12} sm={4} md={3}>
                 <Card sx={{ ...cardStyles, height: '100%' }}>
-                  <Box sx={{ 
+                  <Box sx={{
                     p: { xs: 2.5, md: 3 }, // Increased padding
                     height: '100%',
                     display: 'flex',
@@ -629,27 +723,27 @@ const Dashboard = () => {
                     <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>
                       Completion Rate
                     </Typography>
-                    
+
                     <Box sx={{ position: 'relative', mb: 1.5 }}>
-                      <Box 
-                        sx={{ 
+                      <Box
+                        sx={{
                           width: { xs: 100, md: 120 }, // Smaller size
-                          height: { xs: 100, md: 120 }, 
-                          borderRadius: '50%', 
+                          height: { xs: 100, md: 120 },
+                          borderRadius: '50%',
                           border: `8px solid ${theme.palette.divider}`,
                           borderTop: `8px solid ${theme.palette.primary.main}`,
                           transform: `rotate(${additionalData.inspectionCompletion * 3.6}deg)`,
                           transition: 'transform 1s ease-out'
-                        }} 
+                        }}
                       />
-                      <Typography 
+                      <Typography
                         variant="h4" // Smaller text
-                        color="primary.main" 
+                        color="primary.main"
                         fontWeight="bold"
-                        sx={{ 
-                          position: 'absolute', 
-                          top: '50%', 
-                          left: '50%', 
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
                           transform: 'translate(-50%, -50%)',
                           fontSize: { xs: '1.75rem', md: '2rem' }
                         }}
@@ -657,26 +751,26 @@ const Dashboard = () => {
                         {additionalData.inspectionCompletion}%
                       </Typography>
                     </Box>
-                    
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={additionalData.inspectionCompletion} 
-                      sx={{ 
+
+                    <LinearProgress
+                      variant="determinate"
+                      value={additionalData.inspectionCompletion}
+                      sx={{
                         width: '85%',
-                        height: 8, 
-                        borderRadius: 4, 
+                        height: 8,
+                        borderRadius: 4,
                         bgcolor: 'rgba(0, 0, 0, 0.05)'
-                      }} 
+                      }}
                     />
                   </Box>
                 </Card>
               </Grid>
-              
+
               {/* Risk Level Distribution */}
               <Grid item xs={12} sm={8} md={4}>
                 <Card sx={{ ...cardStyles, height: '100%' }}>
-                  <CardHeader 
-                    title="Risk Level Distribution" 
+                  <CardHeader
+                    title="Risk Level Distribution"
                     titleTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
                     action={
                       <Tooltip title="Analysis of shop risk levels">
@@ -688,8 +782,8 @@ const Dashboard = () => {
                     sx={{ p: { xs: 2, md: 2.5 }, pb: { xs: 1.5, md: 2 } }} // Increased padding
                   />
                   <Divider />
-                  <Box sx={{ 
-                    p: { xs: 2, md: 2.5 }, 
+                  <Box sx={{
+                    p: { xs: 2, md: 2.5 },
                     height: { xs: 200, sm: 220, md: 240 }, // Slightly taller
                     display: 'flex',
                     alignItems: 'center',
@@ -722,12 +816,12 @@ const Dashboard = () => {
                   </Box>
                 </Card>
               </Grid>
-              
+
               {/* Shops by Division */}
               <Grid item xs={12} md={5}>
                 <Card sx={{ ...cardStyles, height: '100%' }}>
-                  <CardHeader 
-                    title="Shops by Division" 
+                  <CardHeader
+                    title="Shops by Division"
                     titleTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
                     action={
                       <Tooltip title="Geographic distribution">
@@ -739,8 +833,8 @@ const Dashboard = () => {
                     sx={{ p: { xs: 2, md: 2.5 }, pb: { xs: 1.5, md: 2 } }} // Increased padding
                   />
                   <Divider />
-                  <Box sx={{ 
-                    p: { xs: 2, md: 2.5 }, 
+                  <Box sx={{
+                    p: { xs: 2, md: 2.5 },
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 2
@@ -751,10 +845,10 @@ const Dashboard = () => {
                         <IconButton size="small">
                           <Typography variant="body2" fontWeight="bold">{item.count}</Typography>
                         </IconButton>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={(item.count / dashboardData.totalShops) * 100} 
-                          sx={{ 
+                        <LinearProgress
+                          variant="determinate"
+                          value={(item.count / dashboardData.totalShops) * 100}
+                          sx={{
                             height: 8, // Shorter bars
                             borderRadius: 4,
                             bgcolor: '#f0f0f0',
@@ -770,119 +864,135 @@ const Dashboard = () => {
               </Grid>
             </Grid>
           </Grid>
-          
+
           {/* Inspection Lists - Better spacing */}
           <Grid container spacing={{ xs: 2, md: 3 }}>
             {/* Recent Inspections */}
             <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
-              <Card sx={{ 
-                ...cardStyles, 
+              <Card sx={{
+                ...cardStyles,
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <CardHeader 
-                  title="Recent Inspections" 
+                <CardHeader
+                  title="Recent Tasks"
                   titleTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
                   action={
-                    <Tooltip title="View all inspection records">
-                      <Button 
-                        size="small" 
-                        color="primary" 
+                    <Tooltip title="View all completed tasks">
+                      <Button
+                        size="small"
+                        color="primary"
                         sx={{ textTransform: 'none' }}
-                        onClick={() => navigate('/inspection-log')}
+                        onClick={() => navigate('/calendar')}
                       >
                         View All
                       </Button>
                     </Tooltip>
                   }
-                  sx={{ 
+                  sx={{
                     p: { xs: 2.5, md: 3 }, // Increased padding
                     backgroundColor: 'rgba(25, 118, 210, 0.05)',
                     borderBottom: `1px solid ${theme.palette.divider}`
                   }}
                 />
-                <List sx={{ 
-                  p: 0, 
-                  overflow: 'auto', 
+                <List sx={{
+                  p: 0,
+                  overflow: 'auto',
                   minHeight: { xs: 300, md: 350 }, // Taller list
                   maxHeight: { xs: 300, md: 350 }
                 }}>
-                  {dashboardData.recentInspections.map((inspection, index) => (
-                    <React.Fragment key={inspection.id}>
-                      <ListItem 
-                        sx={{ 
-                          py: 2, // Increased padding
-                          px: { xs: 2.5, md: 3 },
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.03)'
-                          }
-                        }}
-                        button
-                        onClick={() => navigate(`/inspection-log/${inspection.id}`)}
-                      >
-                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
-                          {/* Left side: Avatar and main info */}
-                          <Box sx={{ display: 'flex', flex: 1, mr: 1.5 }}>
-                            <Avatar 
-                              sx={{ 
-                                bgcolor: getRankingColor(inspection.ranking),
-                                width: 40, // Smaller avatar
-                                height: 40,
-                                mr: 2,
-                                fontSize: '1rem',
-                                fontWeight: 'bold'
-                              }}
-                            >
-                              {inspection.ranking}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle1" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
-                                {inspection.shopName}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                {inspection.date} • {inspection.inspector}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500 }}>
-                                <span>{inspection.location}</span>
-                              </Typography>
+                  {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography>Loading recent tasks...</Typography>
+                    </Box>
+                  ) : getPastTasks().length > 0 ? (
+                    getPastTasks().map((task, index) => (
+                      <React.Fragment key={task._id || index}>
+                        <ListItem
+                          sx={{
+                            py: 2, // Increased padding
+                            px: { xs: 2.5, md: 3 },
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.03)'
+                            }
+                          }}
+                          button
+                          onClick={() => navigate('/calendar')}
+                        >
+                          <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+                            {/* Left side: Avatar and main info */}
+                            <Box sx={{ display: 'flex', flex: 1, mr: 1.5 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: task.status === 'completed' ? theme.palette.success.main : 
+                                           task.status === 'overdue' ? theme.palette.error.main :
+                                           theme.palette.warning.main,
+                                  width: 40, // Smaller avatar
+                                  height: 40,
+                                  mr: 2,
+                                  fontSize: '1rem',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {task.status === 'completed' ? 'C' : task.status === 'overdue' ? 'O' : 'P'}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle1" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
+                                  {task.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                  {formatTaskDate(task.date)} • {task.time}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500 }}>
+                                  <span>{task.location}</span>
+                                </Typography>
+                              </Box>
                             </Box>
+
+                            {/* Right side: Status chip */}
+                            <Chip
+                              label={task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                              size="small"
+                              sx={{
+                                mt: 0.5,
+                                backgroundColor: task.status === 'completed' ? `${theme.palette.success.main}15` : 
+                                                 task.status === 'overdue' ? `${theme.palette.error.main}15` :
+                                                 `${theme.palette.warning.main}15`,
+                                color: task.status === 'completed' ? theme.palette.success.main : 
+                                       task.status === 'overdue' ? theme.palette.error.main :
+                                       theme.palette.warning.main,
+                                borderRadius: 1,
+                                height: 24,
+                                fontSize: '0.75rem'
+                              }}
+                            />
                           </Box>
-                          
-                          {/* Right side: Status chip */}
-                          <Chip 
-                            label={inspection.status} 
-                            size="small"
-                            sx={{ 
-                              mt: 0.5,
-                              backgroundColor: `${getRankingColor(inspection.ranking)}15`,
-                              color: getRankingColor(inspection.ranking),
-                              borderRadius: 1,
-                              height: 24,
-                              fontSize: '0.75rem'
-                            }}
-                          />
-                        </Box>
-                      </ListItem>
-                      {index < dashboardData.recentInspections.length - 1 && (
-                        <Divider component="li" sx={{ mx: { xs: 2.5, md: 3 } }} />
-                      )}
-                    </React.Fragment>
-                  ))}
+                        </ListItem>
+                        {index < getPastTasks().length - 1 && (
+                          <Divider component="li" sx={{ mx: { xs: 2.5, md: 3 } }} />
+                        )}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography>No recent tasks found</Typography>
+                    </Box>
+                  )}
                 </List>
               </Card>
             </Grid>
-            
+
             {/* Upcoming Inspections */}
             <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
-              <Card sx={{ 
-                ...cardStyles, 
+              <Card sx={{
+                ...cardStyles,
                 width: '100%',
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <Box sx={{ 
+                <Box sx={{
                   p: { xs: 2.5, md: 3 }, // Increased padding
                   bgcolor: theme.palette.primary.main,
                   color: 'white',
@@ -892,27 +1002,27 @@ const Dashboard = () => {
                   borderTopLeftRadius: 2,
                   borderTopRightRadius: 2
                 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="subtitle1" fontWeight="bold">Upcoming Inspections</Typography>
-                    <Badge 
-                      badgeContent={dashboardData.upcomingInspections.length} 
+                  <Box sx={{ display: 'flex', gap: "19px", alignItems: 'center' }}>
+                    <Typography variant="subtitle1" fontWeight="bold">Next 7 Days</Typography>
+                    <Badge
+                      badgeContent={getUpcomingTasks().length}
                       color="error"
-                      sx={{ 
+                      sx={{
                         ml: 1.5,
                         '& .MuiBadge-badge': {
                           fontSize: '0.75rem',
                           height: 20,
                           minWidth: 20,
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
                         }
                       }}
                     />
                   </Box>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     size="small"
-                    sx={{ 
-                      color: 'white', 
+                    sx={{
+                      color: 'white',
                       borderColor: 'rgba(255,255,255,0.5)',
                       textTransform: 'none',
                       px: 1.5,
@@ -923,105 +1033,123 @@ const Dashboard = () => {
                     Calendar
                   </Button>
                 </Box>
-                <List sx={{ 
-                  p: 0, 
-                  overflow: 'auto', 
-                  minHeight: { xs: 300, md: 350 }, // Taller list to match recent inspections
-                  maxHeight: { xs: 300, md: 350 }
+                <List sx={{
+                  p: 0,
+                  overflow: 'auto',
+                  minHeight: { xs: 300, md: 350 }, 
+                  maxHeight: { xs: 300, md: 350 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '& .MuiListItem-root': {
+                    display: 'flex',
+                    width: '100%'
+                  }
                 }}>
-                  {dashboardData.upcomingInspections.map((inspection, index) => (
-                    <React.Fragment key={inspection.id}>
-                      <ListItem 
-                        sx={{ 
-                          py: 2, // Increased padding
-                          px: { xs: 2.5, md: 3 },
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.03)'
-                          }
-                        }}
-                        button
-                        onClick={() => navigate('/calendar')}
-                      >
-                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-                          {/* Calendar icon with date indicator - Smaller size */}
-                          <Box 
-                            sx={{ 
-                              width: 46, 
-                              height: 52, 
-                              mr: 2,
-                              border: `1px solid ${theme.palette.primary.main}`,
-                              borderRadius: 1.5,
-                              overflow: 'hidden',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
-                            }}
-                          >
-                            <Box sx={{ 
-                              width: '100%', 
-                              bgcolor: theme.palette.primary.main, 
-                              color: 'white',
-                              fontSize: '0.7rem',
-                              textAlign: 'center',
-                              fontWeight: 'bold',
-                              py: 0.3
-                            }}>
-                              {new Date(inspection.date).toLocaleString('default', { month: 'short' })}
-                            </Box>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.5 }}>
-                              {new Date(inspection.date).getDate()}
-                            </Typography>
-                          </Box>
-                          
-                          {/* Main inspection info - Improved layout */}
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
-                              {inspection.shopName}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                              <Chip 
-                                label={inspection.time} 
-                                size="small"
-                                sx={{ 
-                                  mr: 1, 
-                                  backgroundColor: theme.palette.primary.light, 
-                                  color: 'white',
-                                  height: 22,
-                                  fontSize: '0.7rem',
-                                  fontWeight: 500
-                                }}
-                              />
-                              <Typography variant="body2" color="text.secondary">
-                                {inspection.inspector} • {inspection.location}
+                  {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography>Loading upcoming tasks...</Typography>
+                    </Box>
+                  ) : getUpcomingTasks().length > 0 ? (
+                    getUpcomingTasks().map((task, index) => (
+                      <React.Fragment key={task._id || index}>
+                        <ListItem
+                          sx={{
+                            py: 2, // Increased padding
+                            px: { xs: 2.5, md: 3 },
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.03)'
+                            }
+                          }}
+                          button
+                          onClick={() => navigate('/calendar')}
+                        >
+                          <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                            {/* Calendar icon with date indicator - Smaller size */}
+                            <Box
+                              sx={{
+                                width: 46,
+                                height: 52,
+                                mr: 2,
+                                border: `1px solid ${theme.palette.primary.main}`,
+                                borderRadius: 1.5,
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+                              }}
+                            >
+                              <Box sx={{
+                                width: '100%',
+                                bgcolor: theme.palette.primary.main,
+                                color: 'white',
+                                fontSize: '0.7rem',
+                                textAlign: 'center',
+                                fontWeight: 'bold',
+                                py: 0.3
+                              }}>
+                                {new Date(task.date).toLocaleString('default', { month: 'short' })}
+                              </Box>
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', lineHeight: 1.5 }}>
+                                {new Date(task.date).getDate()}
                               </Typography>
                             </Box>
+
+                            {/* Main task info - Improved layout */}
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="subtitle1" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>
+                                {task.title}
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                <Chip
+                                  label={task.time}
+                                  size="small"
+                                  sx={{
+                                    mr: 1,
+                                    backgroundColor: theme.palette.primary.light,
+                                    color: 'white',
+                                    height: 22,
+                                    fontSize: '0.7rem',
+                                    fontWeight: 500
+                                  }}
+                                />
+                                <Typography variant="body2" color="text.secondary">
+                                  {task.location}
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            {/* Task status indicator */}
+                            <Chip
+                              label={task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                              size="small"
+                              sx={{
+                                backgroundColor: task.status === 'completed' ? theme.palette.success.main : 
+                                                 task.status === 'overdue' ? theme.palette.error.main :
+                                                 theme.palette.warning.main,
+                                color: 'white',
+                                ml: 1,
+                                borderRadius: 1,
+                                fontWeight: 500,
+                                height: 24,
+                                fontSize: '0.75rem'
+                              }}
+                            />
                           </Box>
-                          
-                          {/* Inspection type indicator */}
-                          <Chip 
-                            label={inspection.type} 
-                            size="small"
-                            sx={{ 
-                              backgroundColor: getInspectionTypeColor(inspection.type),
-                              color: 'white',
-                              ml: 1,
-                              borderRadius: 1,
-                              fontWeight: 500,
-                              height: 24,
-                              fontSize: '0.75rem'
-                            }}
-                          />
-                        </Box>
-                      </ListItem>
-                      {index < dashboardData.upcomingInspections.length - 1 && (
-                        <Divider component="li" sx={{ mx: { xs: 2.5, md: 3 } }} />
-                      )}
-                    </React.Fragment>
-                  ))}
+                        </ListItem>
+                        {index < getUpcomingTasks().length - 1 && (
+                          <Divider component="li" sx={{ mx: { xs: 2.5, md: 3 } }} />
+                        )}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                      <Typography>No upcoming tasks found</Typography>
+                    </Box>
+                  )}
                 </List>
               </Card>
             </Grid>

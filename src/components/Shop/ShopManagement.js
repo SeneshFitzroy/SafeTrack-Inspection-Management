@@ -43,6 +43,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PhoneIcon from '@mui/icons-material/Phone';
 import BadgeIcon from '@mui/icons-material/Badge';
 import GroupIcon from '@mui/icons-material/Group';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 
@@ -56,11 +57,350 @@ import {
   getAllShops, 
   createShop, 
   updateShop, 
-  deleteShop 
+  deleteShop,
+  updateShopOwnership 
 } from '../../services/shopService';
 
 // Filter options
-const GN_DIVISIONS = ['All', 'Biyagama', 'Kaduwela', 'Kelaniya', 'Kolonnawa'];
+const GN_DIVISIONS = [
+  'All',
+  'Akurana',
+  'Delthota',
+  'Doluwa',
+  'Gangawata Korale',
+  'Ganga Ihala Korale',
+  'Harispattuwa',
+  'Hatharaliyadda',
+  'Kundasale',
+  'Medadumbara',
+  'Minipe',
+  'Panvila',
+  'Pasbage Korale',
+  'Pathadumbara',
+  'Pathahewaheta',
+  'Poojapitiya',
+  'Thumpane',
+  'Udadumbara',
+  'Udapalatha',
+  'Udunuwara',
+  'Yatinuwara',
+  'Ambanganga Korale',
+  'Dambulla',
+  'Galewela',
+  'Laggala-Pallegama',
+  'Matale',
+  'Naula',
+  'Pallepola',
+  'Rattota',
+  'Ukuwela',
+  'Wilgamuwa',
+  'Yatawatta',
+  'Ambagamuwa',
+  'Hanguranketha',
+  'Kothmale',
+  'Nuwara Eliya',
+  'Walapane',
+  'Norwood',
+  'Kothmale West',
+  'Nildandahinna',
+  'Thalawakale',
+  'Mathurata',
+  'Addalachchenai',
+  'Akkaraipattu',
+  'Alayadiwembu',
+  'Ampara',
+  'Damana',
+  'Dehiattakandiya',
+  'Eragama',
+  'Kalmunai Muslim',
+  'Kalmunai Tamil',
+  'Karaitivu',
+  'Lahugala',
+  'Mahaoya',
+  'Navithanveli',
+  'Ninthavur',
+  'Padiyathalawa',
+  'Pothuvil',
+  'Sainthamarathu',
+  'Samanthurai',
+  'Thirukkovil',
+  'Uhana',
+  'Eravur Pattu',
+  'Eravur Town',
+  'Kattankudy',
+  'Koralai Pattu',
+  'Koralai Pattu Central',
+  'Koralai Pattu North',
+  'Koralai Pattu South',
+  'Koralai Pattu West',
+  'Manmunai North',
+  'Manmunai Pattu',
+  'Manmunai S. and Eruvil Pattu',
+  'Manmunai South West',
+  'Manmunai West',
+  'Porativu Pattu',
+  'Gomarankadawala',
+  'Kantalai',
+  'Kinniya',
+  'Kuchchaveli',
+  'Morawewa',
+  'Muttur',
+  'Padavi Sri Pura',
+  'Seruvila',
+  'Thambalagamuwa',
+  'Trincomalee',
+  'Verugal',
+  'Galnewa',
+  'Galenbindunuwewa',
+  'Horowpothana',
+  'Ipalogama',
+  'Kahatagasdigiliya',
+  'Kebithigollewa',
+  'Kekirawa',
+  'Mahavilachchiya',
+  'Medawachchiya',
+  'Mihinthale',
+  'Nachchadoowa',
+  'Nochchiyagama',
+  'Nuwaragam Palatha Central',
+  'Nuwaragam Palatha East',
+  'Padaviya',
+  'Palagala',
+  'Palugaswewa',
+  'Rajanganaya',
+  'Rambewa',
+  'Thalawa',
+  'Thambuttegama',
+  'Thirappane',
+  'Dimbulagala',
+  'Elahera',
+  'Hingurakgoda',
+  'Lankapura',
+  'Medirigiriya',
+  'Thamankaduwa',
+  'Welikanda',
+  'Delft',
+  'Island North',
+  'Island South',
+  'Jaffna',
+  'Karainagar',
+  'Nallur',
+  'Thenmaradchi',
+  'Vadamaradchi East',
+  'Vadamaradchi North',
+  'Vadamaradchi South-West',
+  'Valikamam East',
+  'Valikamam North',
+  'Valikamam South',
+  'Valikamam South-West',
+  'Valikamam West',
+  'Kandavalai',
+  'Karachchi',
+  'Pachchilaipalli',
+  'Poonakary',
+  'Madhu',
+  'Mannar',
+  'Manthai West',
+  'Musalai',
+  'Nanaddan',
+  'Manthai East',
+  'Maritimepattu',
+  'Oddusuddan',
+  'Puthukudiyiruppu',
+  'Thunukkai',
+  'Welioya',
+  'Vavuniya',
+  'Vavuniya North',
+  'Vavuniya South',
+  'Vengalacheddikulam',
+  'Alawwa',
+  'Ambanpola',
+  'Bamunakotuwa',
+  'Bingiriya',
+  'Ehetuwewa',
+  'Galgamuwa',
+  'Ganewatta',
+  'Giribawa',
+  'Ibbagamuwa',
+  'Katupotha',
+  'Kobeigane',
+  'Kotavehera',
+  'Kuliyapitiya East',
+  'Kuliyapitiya West',
+  'Kurunegala',
+  'Mahawa',
+  'Mallawapitiya',
+  'Maspotha',
+  'Mawathagama',
+  'Narammala',
+  'Nikaweratiya',
+  'Panduwasnuwara',
+  'Pannala',
+  'Polgahawela',
+  'Polpithigama',
+  'Rasnayakapura',
+  'Rideegama',
+  'Udubaddawa',
+  'Wariyapola',
+  'Weerambugedara',
+  'Anamaduwa',
+  'Arachchikattuwa',
+  'Chilaw',
+  'Dankotuwa',
+  'Kalpitiya',
+  'Karuwalagaswewa',
+  'Madampe',
+  'Mahakumbukkadawala',
+  'Mahawewa',
+  'Mundalama',
+  'Nattandiya',
+  'Nawagattegama',
+  'Pallama',
+  'Puttalam',
+  'Vanathavilluwa',
+  'Wennappuwa',
+  'Aranayaka',
+  'Bulathkohupitiya',
+  'Dehiovita',
+  'Deraniyagala',
+  'Galigamuwa',
+  'Kegalle',
+  'Mawanella',
+  'Rambukkana',
+  'Ruwanwella',
+  'Warakapola',
+  'Yatiyanthota',
+  'Ayagama',
+  'Balangoda',
+  'Eheliyagoda',
+  'Elapattha',
+  'Embilipitiya',
+  'Godakawela',
+  'Imbulpe',
+  'Kahawatta',
+  'Kalawana',
+  'Kiriella',
+  'Kolonna',
+  'Kuruvita',
+  'Nivithigala',
+  'Opanayaka',
+  'Pelmadulla',
+  'Ratnapura',
+  'Weligepola',
+  'Akmeemana',
+  'Ambalangoda',
+  'Baddegama',
+  'Balapitiya',
+  'Benthota',
+  'Bope-Poddala',
+  'Elpitiya',
+  'Galle',
+  'Gonapinuwala',
+  'Habaraduwa',
+  'Hikkaduwa',
+  'Imaduwa',
+  'Karandeniya',
+  'Nagoda',
+  'Neluwa',
+  'Niyagama',
+  'Thawalama',
+  'Welivitiya-Divithura',
+  'Yakkalamulla',
+  'Ambalantota',
+  'Angunakolapelessa',
+  'Beliatta',
+  'Hambantota',
+  'Katuwana',
+  'Lunugamvehera',
+  'Okewela',
+  'Sooriyawewa',
+  'Tangalle',
+  'Thissamaharama',
+  'Walasmulla',
+  'Weeraketiya',
+  'Akuressa',
+  'Athuraliya',
+  'Devinuwara',
+  'Dickwella',
+  'Hakmana',
+  'Kamburupitiya',
+  'Kirinda Puhulwella',
+  'Kotapola',
+  'Malimbada',
+  'Matara',
+  'Mulatiyana',
+  'Pasgoda',
+  'Pitabeddara',
+  'Thihagoda',
+  'Weligama',
+  'Welipitiya',
+  'Badulla',
+  'Bandarawela',
+  'Ella',
+  'Haldummulla',
+  'Hali-Ela',
+  'Haputale',
+  'Kandaketiya',
+  'Lunugala',
+  'Mahiyanganaya',
+  'Meegahakivula',
+  'Passara',
+  'Rideemaliyadda',
+  'Soranathota',
+  'Uva-Paranagama',
+  'Welimada',
+  'Badalkumbura',
+  'Bibile',
+  'Buttala',
+  'Katharagama',
+  'Madulla',
+  'Medagama',
+  'Moneragala',
+  'Sevanagala',
+  'Siyambalanduwa',
+  'Thanamalvila',
+  'Wellawaya',
+  'Colombo',
+  'Dehiwala',
+  'Homagama',
+  'Kaduwela',
+  'Kesbewa',
+  'Kolonnawa',
+  'Kotte',
+  'Maharagama',
+  'Moratuwa',
+  'Padukka',
+  'Ratmalana',
+  'Seethawaka',
+  'Thimbirigasyaya',
+  'Attanagalla',
+  'Biyagama',
+  'Divulapitiya',
+  'Dompe',
+  'Gampaha',
+  'Ja-Ela',
+  'Katana',
+  'Kelaniya',
+  'Mahara',
+  'Minuwangoda',
+  'Mirigama',
+  'Negombo',
+  'Wattala',
+  'Agalawatta',
+  'Bandaragama',
+  'Beruwala',
+  'Bulathsinhala',
+  'Dodangoda',
+  'Horana',
+  'Ingiriya',
+  'Kalutara',
+  'Madurawela',
+  'Mathugama',
+  'Millaniya',
+  'Palindanuwara',
+  'Panadura',
+  'Walallavita'
+];
 const STATUS_OPTIONS = ['All', 'Active', 'Inactive'];
 
 const ShopManagement = () => {
@@ -116,7 +456,9 @@ const ShopManagement = () => {
     const fetchShops = async () => {
       setLoading(true);
       try {
+        console.log("Fetching shops for current user...");
         const fetchedShops = await getAllShops();
+        console.log(`Received ${fetchedShops.length} shops from server`);
         setShops(fetchedShops);
       } catch (error) {
         console.error('Error fetching shops:', error);
@@ -315,7 +657,26 @@ const ShopManagement = () => {
     setLoading(true);
     
     try {
-      const newShop = await createShop(shopData);
+      // Map form fields to match the API schema
+      const formattedShopData = {
+        name: shopData.establishmentName,
+        address: shopData.address,
+        owner: shopData.ownerName,
+        telephone: shopData.telephoneNo,
+        licenseNo: shopData.licenseNumber,
+        employees: shopData.numberOfEmployees,
+        gnDivision: shopData.gnRegion,
+        category: shopData.tradeType,
+        status: 'Active',
+        businessRegNo: shopData.businessRegNo,
+        nicNumber: shopData.nicNumber,
+        district: shopData.district,
+        phiArea: shopData.phiArea,
+        privateAddress: shopData.privateAddress,
+        licenseYear: shopData.licenseYear
+      };
+      
+      const newShop = await createShop(formattedShopData);
       setShops([...shops, newShop]);
       setSnackbar({
         open: true,
@@ -392,6 +753,60 @@ const ShopManagement = () => {
       message: 'Exporting shop details as PDF...',
       severity: 'info'
     });
+  };
+
+  const handleClaimOwnership = async (shopId) => {
+    setLoading(true);
+    
+    try {
+      const updatedShop = await updateShopOwnership(shopId);
+      const updatedShops = shops.map(shop => 
+        shop._id === updatedShop._id ? updatedShop : shop
+      );
+      
+      setShops(updatedShops);
+      setSnackbar({
+        open: true,
+        message: 'Ownership claimed successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error claiming ownership:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to claim ownership',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateShopOwnership = async () => {
+    setLoading(true);
+    
+    try {
+      const result = await updateShopOwnership();
+      
+      // Refresh shop list
+      const refreshedShops = await getAllShops();
+      setShops(refreshedShops);
+      
+      setSnackbar({
+        open: true,
+        message: `Success! ${result.updatedShops.length} shops are now visible only to you.`,
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating shop ownership:', error);
+      setSnackbar({
+        open: true,
+        message: typeof error === 'string' ? error : 'Failed to update shop ownership',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const HeaderCell = ({ label }) => (
@@ -626,6 +1041,18 @@ const ShopManagement = () => {
                                   }}
                                 >
                                   <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Claim Ownership">
+                                <IconButton 
+                                  size="small" 
+                                  color="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClaimOwnership(shop._id);
+                                  }}
+                                >
+                                  <AdminPanelSettingsIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                             </Box>
