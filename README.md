@@ -17,11 +17,12 @@ Welcome to the **SafeTrack Web Application**! This platform is designed to strea
 6. [Innovation & Uniqueness](#innovation-uniqueness)
 7. [Feasibility & Implementation](#feasibility-implementation)
 8. [Impact & Benefits](#impact-benefits)
-9. [Additional Information](#additional-information)
-10. [Future Implementations](#future-implementations)
-11. [Installation and Setup](#installation-and-setup)
-12. [Contributing](#contributing)
-13. [License](#license)
+9. [Team Members](#team-members)
+10. [Additional Information](#additional-information)
+11. [Future Implementations](#future-implementations)
+12. [Installation and Setup](#installation-and-setup)
+13. [Contributing](#contributing)
+14. [License](#license)
 
 ---
 
@@ -109,6 +110,16 @@ In Sri Lanka, Public Health Inspectors are burdened with a **time-consuming** an
 **For Public Health**:
 - **Improved Safety**: Faster response to violations ensures better protection of public health.
 - **Public Trust**: Transparency in the inspection process builds trust with the public.
+
+---
+
+## Team Members 👩‍💻👨‍💻
+
+- **Senesh Fitzroy** - Team Leader
+- **Nipuni Ariyathilaka**
+- **Maleesha Devindi**
+- **Pasindu Piyumika**
+- **Duleesha Jayangani**
 
 ---
 
@@ -212,5 +223,3 @@ This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LIC
 
 The SafeTrack web application is deployed and hosted on **Netlify** for fast, reliable performance. Visit the live version here:  
 🔗 **[SafeTrack Live](https://graceful-vacherin-0fb111.netlify.app/)**
-
-This final version includes all the necessary details, from the project overview to the live link, ensuring it's professional and suitable for any development, presentation, or submission purposes.
