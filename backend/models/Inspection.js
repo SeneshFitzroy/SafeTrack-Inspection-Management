@@ -6,11 +6,6 @@ const inspectionSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  shopId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Shop',
-    required: true
-  },
   shopName: {
     type: String,
     required: true
@@ -18,60 +13,27 @@ const inspectionSchema = new mongoose.Schema({
   shopAddress: {
     type: String
   },
+  GNDivision: {
+    type: String
+  },
   inspector: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
   },
   inspectorName: {
     type: String
-  },
-  inspectionDate: {
-    type: Date,
-    required: true
   },
   inspectionType: {
     type: String,
     enum: ['Routine', 'Follow-up', 'Complaint-based', 'Special'],
     default: 'Routine'
   },
-  findings: {
-    type: String
-  },
-  recommendations: {
-    type: String
-  },
-  compliance: {
-    foodHandling: {
-      type: Number,
-      min: 0,
-      max: 10
-    },
-    sanitationCleanliness: {
-      type: Number,
-      min: 0,
-      max: 10
-    },
-    wasteManagement: {
-      type: Number,
-      min: 0,
-      max: 10
-    },
-    pestControl: {
-      type: Number,
-      min: 0,
-      max: 10
-    },
-    waterQuality: {
-      type: Number,
-      min: 0,
-      max: 10
-    }
+  inspectionDate: {
+    type: Date,
+    default: Date.now
   },
   overallRating: {
-    type: Number,
-    min: 0,
-    max: 10
+    type: String,
   },
   status: {
     type: String,
@@ -93,6 +55,18 @@ const inspectionSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  locationEnvironment: {
+    type: Array,
+  },
+  buildingStructure: {
+    type: Array,
+  },
+  foodPreparationArea: {
+    type: Array,
+  },
+  healthInstructions: {
+    type: Array
   }
 });
 

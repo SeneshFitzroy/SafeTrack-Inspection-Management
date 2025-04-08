@@ -25,7 +25,8 @@ import {
   Tooltip,
   Snackbar,
   Alert,
-  Checkbox
+  Checkbox,
+  Badge
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import {
@@ -33,8 +34,9 @@ import {
   Language as LanguageIcon,
   FormatSize as FormatSizeIcon,
   Palette as ThemeIcon,
-  Email as EmailIcon,
-  Message as SmsIcon,
+  Notifications as NotificationsIcon,
+  NotificationsNone as SilentModeIcon,
+  CircleNotifications as PushNotificationIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   Brightness6 as ContrastIcon,
@@ -43,7 +45,9 @@ import {
   Done as DoneIcon,
   MobileScreenShare as MobileIcon,
   Bolt as PerformanceIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  NotificationsActive as NotificationsActiveIcon,
+  Send as SendIcon
 } from '@mui/icons-material';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
@@ -183,6 +187,18 @@ const TestBadge = styled(Box)(({ theme }) => ({
   border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
 }));
 
+const TestButton = styled(Button)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  marginBottom: theme.spacing(1),
+  padding: '6px 16px',
+  fontSize: '0.8rem',
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  color: theme.palette.primary.main,
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+  }
+}));
+
 // Helper to adjust color opacity
 const adjustColorOpacity = (hex, opacity) => {
   try {
@@ -242,6 +258,13 @@ const Settings = () => {
   const [textSpacing, setTextSpacing] = useState(parseInt(localStorage.getItem('textSpacing') || '100'));
   const [motionReduced, setMotionReduced] = useState(localStorage.getItem('motionReduced') === 'true');
 
+  const [testNotification, setTestNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'info',
+    title: ''
+  });
+
   const handleChange = (name) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setPendingSettings(prev => ({
@@ -262,8 +285,73 @@ const Settings = () => {
       case 'language':
         applyLanguage(value);
         break;
+      case 'notificationMethod':
+        applyNotificationMethod(value);
+        break;
       default:
         break;
+    }
+  };
+
+  const applyNotificationMethod = (method) => {
+    if (method === 'desktop' && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+    const safetrackSettings = JSON.parse(localStorage.getItem('safetrackSettings') || '{}');
+    localStorage.setItem('safetrackSettings', JSON.stringify({
+      ...safetrackSettings,
+      notificationMethod: method
+    }));
+    setTestNotification({
+      open: true,
+      title: 'Notification Method Updated',
+      message: `Notifications will now be delivered via ${method === 'inApp' ? 'in-app alerts' : 
+                method === 'desktop' ? 'desktop notifications' : 'silent notifications'}`,
+      severity: 'success'
+    });
+  };
+
+  const sendTestNotification = (type) => {
+    let title, message, severity;
+    switch(type) {
+      case 'followUp':
+        title = 'Follow-up Reminder';
+        message = 'You have a follow-up inspection due for "Central Food Market" in 24 hours.';
+        severity = 'info';
+        break;
+      case 'violation':
+        title = 'Critical Violation Alert';
+        message = 'A critical violation has been reported at "Harbor Restaurant" requiring immediate attention.';
+        severity = 'error';
+        break;
+      case 'upcoming':
+        title = 'Upcoming Inspection';
+        message = 'You have 3 scheduled inspections for tomorrow. Tap to view details.';
+        severity = 'warning';
+        break;
+      case 'system':
+        title = 'System Update';
+        message = 'SafeTrack has been updated to version 2.4. New features are now available.';
+        severity = 'success';
+        break;
+      default:
+        title = 'Test Notification';
+        message = 'This is a test notification from SafeTrack.';
+        severity = 'info';
+    }
+    const method = pendingSettings.notificationMethod || settings.notificationMethod || 'inApp';
+    if (method === 'desktop' && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: message,
+        icon: '/logo192.png'
+      });
+    } else {
+      setTestNotification({
+        open: true,
+        title,
+        message,
+        severity
+      });
     }
   };
 
@@ -458,31 +546,57 @@ const Settings = () => {
                     <RadioGroup 
                       row
                       name="notificationMethod" 
-                      value={settings.notificationMethod}
+                      value={pendingSettings.notificationMethod || settings.notificationMethod || 'inApp'}
                       onChange={handleChange('notificationMethod')}
                     >
                       <FormControlLabel 
-                        value="email" 
+                        value="inApp" 
                         control={<Radio color="primary" size="small" />} 
                         label={
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <EmailIcon fontSize="small" sx={{ mr: 0.5 }} />
-                            <Typography variant="body2">Email</Typography>
+                            <NotificationsIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            <Typography variant="body2">In-App</Typography>
                           </Box>
                         }
                         sx={{ mr: 3 }}
                       />
                       <FormControlLabel 
-                        value="sms" 
+                        value="desktop" 
                         control={<Radio color="primary" size="small" />} 
                         label={
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <SmsIcon fontSize="small" sx={{ mr: 0.5 }} />
-                            <Typography variant="body2">SMS</Typography>
+                            <PushNotificationIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            <Typography variant="body2">Desktop</Typography>
+                          </Box>
+                        }
+                      />
+                      <FormControlLabel 
+                        value="silent" 
+                        control={<Radio color="primary" size="small" />} 
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <SilentModeIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            <Typography variant="body2">Silent</Typography>
                           </Box>
                         }
                       />
                     </RadioGroup>
+                    <Box sx={{ mt: 1.5, p: 1, bgcolor: alpha(theme.palette.info.light, 0.1), borderRadius: 1 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        <b>In-App</b>: Notifications appear in the app notification center
+                        <br />
+                        <b>Desktop</b>: Browser notifications when app is running
+                        <br />
+                        <b>Silent</b>: Only visible when checking notification center
+                      </Typography>
+                    </Box>
+                    <TestButton
+                      startIcon={<SendIcon fontSize="small" />}
+                      onClick={() => sendTestNotification('test')}
+                      fullWidth
+                    >
+                      Send Test Notification
+                    </TestButton>
                   </FormSection>
                 </SettingSection>
                 <SettingSection>
@@ -494,46 +608,117 @@ const Settings = () => {
                       <FormControlLabel 
                         control={
                           <Switch 
-                            checked={settings.followUpAlerts}
+                            checked={pendingSettings.followUpAlerts !== undefined ? 
+                              pendingSettings.followUpAlerts : 
+                              settings.followUpAlerts || false}
                             onChange={handleChange('followUpAlerts')}
                             color="primary"
                             size="small"
                           />
                         }
                         label={
-                          <Typography variant="body2">
-                            Follow-up alerts (24h before deadline)
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body2">
+                              Follow-up alerts (24h before deadline)
+                            </Typography>
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                sendTestNotification('followUp');
+                              }}
+                              sx={{ ml: 1, color: 'primary.main', opacity: 0.7 }}
+                            >
+                              <NotificationsActiveIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         }
                       />
                       <FormControlLabel 
                         control={
                           <Switch 
-                            checked={settings.violationAlerts}
+                            checked={pendingSettings.violationAlerts !== undefined ? 
+                              pendingSettings.violationAlerts : 
+                              settings.violationAlerts || false}
                             onChange={handleChange('violationAlerts')}
                             color="primary"
                             size="small"
                           />
                         }
                         label={
-                          <Typography variant="body2">
-                            Critical violation alerts
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body2">
+                              Critical violation alerts
+                            </Typography>
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                sendTestNotification('violation');
+                              }}
+                              sx={{ ml: 1, color: 'primary.main', opacity: 0.7 }}
+                            >
+                              <NotificationsActiveIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         }
                       />
                       <FormControlLabel 
                         control={
                           <Switch 
-                            checked={settings.upcomingInspections}
+                            checked={pendingSettings.upcomingInspections !== undefined ? 
+                              pendingSettings.upcomingInspections : 
+                              settings.upcomingInspections || false}
                             onChange={handleChange('upcomingInspections')}
                             color="primary"
                             size="small"
                           />
                         }
                         label={
-                          <Typography variant="body2">
-                            Upcoming inspection reminders
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body2">
+                              Upcoming inspection reminders
+                            </Typography>
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                sendTestNotification('upcoming');
+                              }}
+                              sx={{ ml: 1, color: 'primary.main', opacity: 0.7 }}
+                            >
+                              <NotificationsActiveIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        }
+                      />
+                      <FormControlLabel 
+                        control={
+                          <Switch 
+                            checked={pendingSettings.systemNotifications !== undefined ? 
+                              pendingSettings.systemNotifications : 
+                              settings.systemNotifications || false}
+                            onChange={handleChange('systemNotifications')}
+                            color="primary"
+                            size="small"
+                          />
+                        }
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Typography variant="body2">
+                              System and application updates
+                            </Typography>
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                sendTestNotification('system');
+                              }}
+                              sx={{ ml: 1, color: 'primary.main', opacity: 0.7 }}
+                            >
+                              <NotificationsActiveIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         }
                       />
                     </Box>
@@ -782,6 +967,24 @@ const Settings = () => {
         >
           <Alert onClose={() => setResetSuccess(false)} severity="info" sx={{ width: '100%' }}>
             Settings reset to default values
+          </Alert>
+        </Snackbar>
+        <Snackbar 
+          open={testNotification.open} 
+          autoHideDuration={5000} 
+          onClose={() => setTestNotification({...testNotification, open: false})}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert 
+            onClose={() => setTestNotification({...testNotification, open: false})} 
+            severity={testNotification.severity} 
+            sx={{ width: '100%' }}
+            elevation={6}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              {testNotification.title}
+            </Typography>
+            {testNotification.message}
           </Alert>
         </Snackbar>
       </Box>

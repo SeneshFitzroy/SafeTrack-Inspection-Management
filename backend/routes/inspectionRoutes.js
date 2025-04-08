@@ -2,72 +2,53 @@ const express = require('express');
 const router = express.Router();
 const Inspection = require('../models/Inspection');
 const auth = require('../middleware/auth');
-
-// Generate unique inspection ID
-const generateInspectionId = async () => {
-  const date = new Date();
-  const year = date.getFullYear().toString().substr(-2);
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const prefix = `INS${year}${month}`;
-  
-  // Find the latest inspection to determine the next number
-  const latestInspection = await Inspection.findOne({
-    inspectionId: new RegExp(`^${prefix}`)
-  }).sort({ inspectionId: -1 });
-  
-  let nextNumber = 1;
-  if (latestInspection) {
-    const latestNumber = parseInt(latestInspection.inspectionId.substr(7));
-    nextNumber = latestNumber + 1;
-  }
-  
-  return `${prefix}${String(nextNumber).padStart(3, '0')}`;
-};
+const mongoose = require('mongoose');
 
 // @route   POST /api/inspections
 // @desc    Create a new inspection
 // @access  Private
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Incoming request body:', req.body);
+
     const { 
-      shopId, 
       shopName, 
       shopAddress,
-      inspectionDate, 
+      GNDivision,
       inspectionType, 
-      findings, 
-      recommendations, 
-      compliance,
       overallRating,
       status,
       photos,
-      notes
+      notes,
+      foodPreparationArea,
+      locationEnvironment,
+      buildingStructure,
+      healthInstructions,
     } = req.body;
-
-    // Generate unique inspection ID
-    const inspectionId = await generateInspectionId();
 
     // Create new inspection
     const newInspection = new Inspection({
-      inspectionId,
-      shopId,
+      inspectionId: new mongoose.Types.ObjectId(),
       shopName,
       shopAddress,
-      inspector: req.user._id,
+      GNDivision,
+      inspector: req.user.userId,
       inspectorName: req.user.name,
-      inspectionDate,
       inspectionType,
-      findings,
-      recommendations,
-      compliance,
       overallRating,
       status,
       photos,
-      notes
+      notes,
+      foodPreparationArea,
+      locationEnvironment,
+      buildingStructure,
+      healthInstructions,
     });
 
+    console.log('Creating new inspection:', newInspection);
     const inspection = await newInspection.save();
 
+    console.log('Inspection created successfully:', inspection);
     res.status(201).json(inspection);
   } catch (error) {
     console.error('Create inspection error:', error.message);
@@ -96,7 +77,7 @@ router.get('/', auth, async (req, res) => {
 // @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
-    const inspection = await Inspection.findById(req.params.id)
+    const inspection = await Inspection.findOne({ inspectionId: req.params.id })
       .populate('shopId', 'name address gnDivision category')
       .populate('inspector', 'name email');
     
@@ -107,9 +88,6 @@ router.get('/:id', auth, async (req, res) => {
     res.json(inspection);
   } catch (error) {
     console.error('Get inspection error:', error.message);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Inspection not found' });
-    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -149,14 +127,14 @@ router.put('/:id', auth, async (req, res) => {
 // @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const inspection = await Inspection.findById(req.params.id);
-    
+    // Use findByIdAndDelete to directly delete the inspection
+    const inspection = await Inspection.findByIdAndDelete(req.params.id);
+
     if (!inspection) {
       return res.status(404).json({ message: 'Inspection not found' });
     }
 
-    await inspection.remove();
-    res.json({ message: 'Inspection deleted' });
+    res.json({ message: 'Inspection deleted successfully' });
   } catch (error) {
     console.error('Delete inspection error:', error.message);
     if (error.kind === 'ObjectId') {

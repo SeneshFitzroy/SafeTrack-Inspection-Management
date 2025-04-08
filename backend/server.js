@@ -42,6 +42,8 @@ const connectDB = async () => {
   }
 };
 
+mongoose.set('strictPopulate', false);
+
 connectDB();
 
 // Define Routes

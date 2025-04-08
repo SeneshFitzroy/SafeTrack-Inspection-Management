@@ -18,6 +18,15 @@ export const getShopById = async (id) => {
   }
 };
 
+export const getShopByName = async (name) => {
+  try {
+    const response = await api.get(`/api/shops/name/${name}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'An error occurred fetching shop details';
+  }
+};
+
 export const createShop = async (shopData) => {
   try {
     const response = await api.post('/api/shops', shopData);
@@ -51,5 +60,14 @@ export const updateShopOwnership = async () => {
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || 'An error occurred updating shop ownership';
+  }
+};
+
+export const getShopsByDivision = async () => {
+  try {
+    const response = await api.get('/api/shops/divisions');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'An error occurred fetching shops by division';
   }
 };

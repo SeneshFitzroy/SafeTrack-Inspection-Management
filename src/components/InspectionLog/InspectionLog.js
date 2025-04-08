@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Button, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
   IconButton,
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   TextField,
   InputAdornment,
@@ -52,58 +52,8 @@ import HelpIcon from '@mui/icons-material/Help';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 import InspectionDetailsPanel from '../Inspection/InspectionDetailsPanel';
-import { getAllInspections, getInspectionById } from '../../services/inspectionService';
+import { getAllInspections, getInspectionById, deleteInspection } from '../../services/inspectionService';
 import { getAllShops } from '../../services/shopService';
-
-// Enhanced mock data with consistent date ranges spanning different months
-const MOCK_INSPECTION_DATA = [
-  // October 2024
-  { id: 13245, date: '2024-10-28', shopName: 'Family Pharmacy', gnDivision: 'Kolonnawa', ranking: 'A' },
-  { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', gnDivision: 'Biyagama', ranking: 'C' },
-  { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Groceries', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13241, date: '2024-10-18', shopName: 'Wellness Pharmacy', gnDivision: 'Biyagama', ranking: 'D' },
-  { id: 13240, date: '2024-10-15', shopName: 'Urban Trends Clothing', gnDivision: 'Kolonnawa', ranking: 'C' },
-  { id: 13239, date: '2024-10-12', shopName: 'SwiftTech Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
-  { id: 13238, date: '2024-10-08', shopName: 'Golden Spoon Bakery', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13237, date: '2024-10-05', shopName: 'Sunrise Groceries', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13236, date: '2024-10-02', shopName: 'ABC Cafe & Bakery', gnDivision: 'Biyagama', ranking: 'A' },
-  
-  // September 2024
-  { id: 13235, date: '2024-09-30', shopName: 'Sunset Bakery', gnDivision: 'Kolonnawa', ranking: 'B' },
-  { id: 13234, date: '2024-09-27', shopName: 'Health First Pharmacy', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13233, date: '2024-09-25', shopName: 'Quick Mart Grocery', gnDivision: 'Biyagama', ranking: 'C' },
-  { id: 13232, date: '2024-09-20', shopName: 'Spice Garden Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13231, date: '2024-09-18', shopName: 'Comfort Electronics', gnDivision: 'Kolonnawa', ranking: 'A' },
-  { id: 13230, date: '2024-09-15', shopName: 'Central Pharmacy', gnDivision: 'Biyagama', ranking: 'B' },
-  { id: 13229, date: '2024-09-10', shopName: 'Daily Fresh Market', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13228, date: '2024-09-07', shopName: 'Taste of Asia Restaurant', gnDivision: 'Kelaniya', ranking: 'C' },
-  { id: 13227, date: '2024-09-05', shopName: 'Modern Electronics', gnDivision: 'Biyagama', ranking: 'B' },
-  { id: 13226, date: '2024-09-02', shopName: 'Community Pharmacy', gnDivision: 'Kolonnawa', ranking: 'A' },
-  
-  // August 2024
-  { id: 13225, date: '2024-08-30', shopName: 'Green Grocers', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13224, date: '2024-08-28', shopName: 'Fine Dining Restaurant', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13223, date: '2024-08-25', shopName: 'Budget Electronics', gnDivision: 'Kaduwela', ranking: 'C' },
-  { id: 13222, date: '2024-08-22', shopName: 'Downtown Pharmacy', gnDivision: 'Kolonnawa', ranking: 'B' },
-  { id: 13221, date: '2024-08-20', shopName: 'Fresh Finds Market', gnDivision: 'Kelaniya', ranking: 'A' },
-  { id: 13220, date: '2024-08-18', shopName: 'Easy Tech Store', gnDivision: 'Biyagama', ranking: 'D' },
-  { id: 13219, date: '2024-08-15', shopName: 'Blissful Bakery', gnDivision: 'Kaduwela', ranking: 'B' },
-  { id: 13218, date: '2024-08-10', shopName: 'Convenience Mart', gnDivision: 'Kolonnawa', ranking: 'C' },
-  { id: 13217, date: '2024-08-05', shopName: 'Wellness Clinic Pharmacy', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13216, date: '2024-08-02', shopName: 'Family Restaurant', gnDivision: 'Kelaniya', ranking: 'B' },
-  
-  // July 2024
-  { id: 13215, date: '2024-07-30', shopName: 'Mega Electronics', gnDivision: 'Kaduwela', ranking: 'B' },
-  { id: 13214, date: '2024-07-28', shopName: 'Value Grocery', gnDivision: 'Kolonnawa', ranking: 'A' },
-  { id: 13213, date: '2024-07-25', shopName: 'Town Pharmacy', gnDivision: 'Biyagama', ranking: 'C' },
-  { id: 13212, date: '2024-07-22', shopName: 'Royal Bakery', gnDivision: 'Kelaniya', ranking: 'B' },
-  { id: 13211, date: '2024-07-20', shopName: 'Elite Restaurant', gnDivision: 'Kaduwela', ranking: 'A' },
-  { id: 13210, date: '2024-07-15', shopName: 'Prime Electronics', gnDivision: 'Kolonnawa', ranking: 'B' },
-  { id: 13209, date: '2024-07-10', shopName: 'City Pharmacy', gnDivision: 'Biyagama', ranking: 'A' },
-  { id: 13208, date: '2024-07-05', shopName: 'Budget Grocery', gnDivision: 'Kelaniya', ranking: 'C' },
-  { id: 13207, date: '2024-07-02', shopName: 'Cafe Supreme', gnDivision: 'Kaduwela', ranking: 'B' },
-];
 
 // Available months for filtering - now matches the data
 const AVAILABLE_MONTHS = [
@@ -136,7 +86,7 @@ export const InspectionLog = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // State variables for filtering and sorting
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState('All');
@@ -146,12 +96,13 @@ export const InspectionLog = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [sortField, setSortField] = useState('date');
   const [sortDirection, setSortDirection] = useState('desc');
-  
+  const [shopOptions, setShopOptions] = useState([]);
+
   // State for view/edit dialog
   const [selectedInspection, setSelectedInspection] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState('view'); // 'view', 'edit', or 'delete'
-  
+
   // New state for inspection details panel
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [viewInspectionData, setViewInspectionData] = useState(null);
@@ -178,59 +129,59 @@ export const InspectionLog = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-  // Filter function to apply all active filters
+  // Adjusted filter function to handle real data
   useEffect(() => {
     let filtered = [...inspectionData];
-    
+
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(item => 
-        item.shopName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        item.id.toString().includes(searchQuery) ||
-        item.gnDivision.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(item =>
+        item.shopName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.inspectionId?.toString().includes(searchQuery) ||
+        item.GNDivision?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Apply ranking filter
     if (rankingFilter !== 'All') {
-      filtered = filtered.filter(item => item.ranking === rankingFilter);
+      filtered = filtered.filter(item => item.overallRating === rankingFilter);
     }
-    
+
     // Apply shop filter
     if (filterShop) {
-      filtered = filtered.filter(item => item.shopName === filterShop.name);
+      filtered = filtered.filter(item => item.shopId === filterShop.id);
     }
-    
+
     // Apply date filter - Enhanced to handle "All" option and exact month matching
     if (filterDate !== 'All') {
       const [month, year] = filterDate.split(' ');
       filtered = filtered.filter(item => {
-        const date = new Date(item.date);
+        const date = new Date(item.inspectionDate);
         return (
-          date.getFullYear() === parseInt(year) && 
+          date.getFullYear() === parseInt(year) &&
           date.toLocaleString('default', { month: 'long' }) === month
         );
       });
     }
-    
+
     // Apply sorting
     filtered.sort((a, b) => {
-      if (sortField === 'id') {
-        return sortDirection === 'asc' ? a.id - b.id : b.id - a.id;
-      } else if (sortField === 'date') {
-        return sortDirection === 'asc' 
-          ? new Date(a.date) - new Date(b.date) 
-          : new Date(b.date) - new Date(a.date);
+      if (sortField === 'inspectionId') {
+        return sortDirection === 'asc' ? a.inspectionId - b.inspectionId : b.inspectionId - a.inspectionId;
+      } else if (sortField === 'inspectionDate') {
+        return sortDirection === 'asc'
+          ? new Date(a.inspectionDate) - new Date(b.inspectionDate)
+          : new Date(b.inspectionDate) - new Date(a.inspectionDate);
       } else {
         // String comparisons for other fields
-        const valueA = a[sortField].toString().toLowerCase();
-        const valueB = b[sortField].toString().toLowerCase();
+        const valueA = a[sortField]?.toString().toLowerCase() || '';
+        const valueB = b[sortField]?.toString().toLowerCase() || '';
         return sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
     });
-    
+
     setFilteredData(filtered);
   }, [searchQuery, rankingFilter, filterDate, filterShop, inspectionData, sortField, sortDirection]);
 
@@ -247,7 +198,7 @@ export const InspectionLog = () => {
   // Function to handle dialog actions
   const handleAction = (action, inspection) => {
     setSelectedInspection(inspection);
-    
+
     if (action === 'view') {
       // Convert the inspection data to the format expected by InspectionDetailsPanel
       const inspectionDetails = {
@@ -256,33 +207,33 @@ export const InspectionLog = () => {
         inspector: "Current User", // Default to current user instead of specific inspector
         date: inspection.date,
         status: inspection.ranking,
-        cleanliness: inspection.ranking === 'A' ? 4.5 : 
-                    inspection.ranking === 'B' ? 3.5 : 
-                    inspection.ranking === 'C' ? 2.5 : 1.5,
-        documentation: inspection.ranking === 'A' ? 100 : 
-                      inspection.ranking === 'B' ? 85 : 
-                      inspection.ranking === 'C' ? 70 : 55,
+        cleanliness: inspection.ranking === 'A' ? 4.5 :
+          inspection.ranking === 'B' ? 3.5 :
+            inspection.ranking === 'C' ? 2.5 : 1.5,
+        documentation: inspection.ranking === 'A' ? 100 :
+          inspection.ranking === 'B' ? 85 :
+            inspection.ranking === 'C' ? 70 : 55,
         staffTraining: inspection.ranking === 'A' || inspection.ranking === 'B',
         highlights: [
           "Health and safety compliance in good standing",
           `Inspection conducted in ${inspection.gnDivision} area`,
-          inspection.ranking === 'A' ? "Excellent food handling practices" : 
-          inspection.ranking === 'B' ? "Good food handling practices" : 
-          "Standard food handling practices"
+          inspection.ranking === 'A' ? "Excellent food handling practices" :
+            inspection.ranking === 'B' ? "Good food handling practices" :
+              "Standard food handling practices"
         ],
         recommendations: [
-          inspection.ranking === 'A' ? "Continue maintaining high standards" : 
-          inspection.ranking === 'B' ? "Minor improvements needed in documentation" : 
-          inspection.ranking === 'C' ? "Significant improvements needed in cleanliness" :
-          "Major improvements required across all areas",
+          inspection.ranking === 'A' ? "Continue maintaining high standards" :
+            inspection.ranking === 'B' ? "Minor improvements needed in documentation" :
+              inspection.ranking === 'C' ? "Significant improvements needed in cleanliness" :
+                "Major improvements required across all areas",
           "Follow up inspection scheduled as per protocol"
         ],
         inspectorNotes: `Inspection conducted on ${inspection.date} in ${inspection.gnDivision}.`,
-        attachments: inspection.ranking === 'A' || inspection.ranking === 'B' ? 
-          ["Inspection_Certificate.pdf", "Compliance_Document.pdf"] : 
+        attachments: inspection.ranking === 'A' || inspection.ranking === 'B' ?
+          ["Inspection_Certificate.pdf", "Compliance_Document.pdf"] :
           ["Improvement_Notice.pdf"]
       };
-      
+
       setViewInspectionData(inspectionDetails);
       setDetailsPanelOpen(true);
     } else {
@@ -312,13 +263,29 @@ export const InspectionLog = () => {
   };
 
   // Handle delete confirmation
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedInspection) {
-      setInspectionData(prevData => 
-        prevData.filter(item => item.id !== selectedInspection.id)
-      );
-      setDialogOpen(false);
-      setSelectedInspection(null);
+      try {
+        // Ensure the correct ID field is used for deletion
+        const inspectionId = selectedInspection._id || selectedInspection.id;
+        if (!inspectionId) {
+          throw new Error('Invalid inspection ID');
+        }
+
+        // Call the API to delete the inspection
+        await deleteInspection(inspectionId);
+
+        // Update the local state to remove the deleted inspection
+        setInspectionData(prevData =>
+          prevData.filter(item => item._id !== inspectionId)
+        );
+
+        setDialogOpen(false);
+        setSelectedInspection(null);
+      } catch (error) {
+        console.error('Error deleting inspection:', error);
+        alert('Failed to delete the inspection. Please try again.');
+      }
     }
   };
 
@@ -340,23 +307,23 @@ export const InspectionLog = () => {
 
   const SortableTableCell = ({ label, field }) => (
     <TableCell>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
           cursor: 'pointer',
           '&:hover': { color: theme.palette.primary.main }
         }}
         onClick={() => handleSort(field)}
       >
         {label}
-        <SortIcon 
-          fontSize="small" 
-          sx={{ 
-            ml: 0.5, 
+        <SortIcon
+          fontSize="small"
+          sx={{
+            ml: 0.5,
             opacity: sortField === field ? 1 : 0.3,
             transform: sortField === field && sortDirection === 'desc' ? 'rotate(180deg)' : 'none'
-          }} 
+          }}
         />
       </Box>
     </TableCell>
@@ -369,36 +336,36 @@ export const InspectionLog = () => {
           getAllInspections(),
           getAllShops()
         ]);
-        
+
         setInspectionData(inspections);
         setFilteredData(inspections);
-        
-        // Update shops list if needed
+
+        // Update shop options dynamically based on fetched data
         if (shops && shops.length > 0) {
-          // Convert shops to format needed for filtering
           const formattedShops = shops.map(shop => ({
             id: shop._id,
             name: shop.name
           }));
-          // You might want to update your SHOPS constant or create a state variable
+          setShopOptions(formattedShops);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
-        // Show error message to user
       }
     };
-    
+
     fetchData();
   }, []);
 
-  const handleViewInspection = async (id) => {
+  const handleViewInspection = async (inspectionId) => {
+    console.log('Fetching inspection details for ID:', inspectionId);
     try {
-      const inspectionDetails = await getInspectionById(id);
-      setViewInspectionData(inspectionDetails);
-      setDetailsPanelOpen(true);
+      const inspectionDetails = await getInspectionById(inspectionId);
+      console.log('Fetched inspection details:', inspectionDetails);
+      setSelectedInspection(inspectionDetails);
+      setDialogMode('view');
+      setDialogOpen(true);
     } catch (error) {
       console.error('Error fetching inspection details:', error);
-      // Show error message to user
     }
   };
 
@@ -406,17 +373,17 @@ export const InspectionLog = () => {
     <Box sx={{ display: 'flex', height: '100vh', bgcolor: '#F5F8FF' }}>
       {/* Use the shared Sidebar component */}
       <Sidebar />
-      
+
       {/* Main Content */}
-      <Box sx={{ 
-        flex: 1, 
+      <Box sx={{
+        flex: 1,
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
       }}>
         {/* Show details panel if open, otherwise show the normal view */}
         {detailsPanelOpen && viewInspectionData ? (
-          <InspectionDetailsPanel 
+          <InspectionDetailsPanel
             isOpen={detailsPanelOpen}
             onClose={handleDetailsPanelClose}
             inspectionData={viewInspectionData}
@@ -425,7 +392,7 @@ export const InspectionLog = () => {
           <>
             {/* Header */}
             <Header pageTitle="Inspection Log" />
-            
+
             {/* Inspection Log Content */}
             <Box sx={{ p: 4, flexGrow: 1 }}>
               {/* Toolbar with search and filters */}
@@ -453,14 +420,14 @@ export const InspectionLog = () => {
                     )
                   }}
                 />
-                
+
                 {/* Right Side - Filters and Actions */}
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                   {/* Shop Filter */}
                   <Autocomplete
                     size="small"
                     sx={{ minWidth: 200 }}
-                    options={SHOP_OPTIONS}
+                    options={shopOptions}
                     getOptionLabel={(option) => option.name}
                     value={filterShop}
                     onChange={(event, newValue) => {
@@ -470,7 +437,7 @@ export const InspectionLog = () => {
                       <TextField {...params} label="Shop" variant="outlined" />
                     )}
                   />
-                  
+
                   {/* Date Filter */}
                   <FormControl size="small" sx={{ minWidth: 150 }}>
                     <InputLabel id="date-filter-label">Date</InputLabel>
@@ -487,7 +454,7 @@ export const InspectionLog = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  
+
                   {/* Ranking Filter */}
                   <FormControl size="small" sx={{ minWidth: 150 }}>
                     <InputLabel id="ranking-filter-label">Ranking</InputLabel>
@@ -504,23 +471,23 @@ export const InspectionLog = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  
+
                   {/* Clear Filters Button */}
                   {(searchQuery || rankingFilter !== 'All' || filterShop) && (
-                    <Button 
-                      variant="outlined" 
-                      size="small" 
+                    <Button
+                      variant="outlined"
+                      size="small"
                       startIcon={<ClearIcon />}
                       onClick={clearFilters}
                     >
                       Clear Filters
                     </Button>
                   )}
-                  
+
                   {/* Add New Inspection Button */}
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
+                  <Button
+                    variant="contained"
+                    color="primary"
                     startIcon={<AddIcon />}
                     onClick={() => navigate('/inspection-form')}
                   >
@@ -528,9 +495,9 @@ export const InspectionLog = () => {
                   </Button>
                 </Box>
               </Box>
-              
+
               <Divider sx={{ mb: 3 }} />
-              
+
               {/* Results Count */}
               <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
@@ -541,7 +508,7 @@ export const InspectionLog = () => {
                   {filterDate !== 'All' && <span> from {filterDate}</span>}
                 </Typography>
               </Box>
-              
+
               {/* Table */}
               <TableContainer component={Paper} elevation={0} sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
                 <Table sx={{ minWidth: 650 }} size="medium">
@@ -558,20 +525,20 @@ export const InspectionLog = () => {
                   <TableBody>
                     {filteredData.length > 0 ? (
                       filteredData.map((inspection) => {
-                        const rankingStyle = getRankingColor(inspection.ranking);
+                        const rankingStyle = getRankingColor(inspection.overallRating);
                         return (
-                          <TableRow 
-                            key={inspection.id}
+                          <TableRow
+                            key={inspection.inspectionId}
                             sx={{ '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
                           >
-                            <TableCell sx={{ fontWeight: 500 }}>#{inspection.id}</TableCell>
-                            <TableCell>{formatTableDate(inspection.date)}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>#{inspection.inspectionId.slice(0, 9)}</TableCell>
+                            <TableCell>{formatTableDate(inspection.inspectionDate)}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{inspection.shopName}</TableCell>
-                            <TableCell>{inspection.gnDivision}</TableCell>
+                            <TableCell>{inspection.GNDivision}</TableCell>
                             <TableCell>
-                              <Chip
+                              {<Chip
                                 icon={rankingStyle.icon}
-                                label={inspection.ranking}
+                                label={inspection.overallRating}
                                 size="small"
                                 sx={{
                                   backgroundColor: rankingStyle.bgColor,
@@ -581,22 +548,22 @@ export const InspectionLog = () => {
                                     color: rankingStyle.color
                                   }
                                 }}
-                              />
+                              />}
                             </TableCell>
                             <TableCell align="center">
                               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                                 <Tooltip title="View Details">
-                                  <IconButton 
-                                    size="small" 
+                                  <IconButton
+                                    size="small"
                                     color="primary"
-                                    onClick={() => handleViewInspection(inspection.id)}
+                                    onClick={() => handleViewInspection(inspection.inspectionId)}
                                   >
                                     <ViewIcon fontSize="small" />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Edit Inspection">
-                                  <IconButton 
-                                    size="small" 
+                                  <IconButton
+                                    size="small"
                                     color="warning"
                                     onClick={() => handleAction('edit', inspection)}
                                   >
@@ -604,8 +571,8 @@ export const InspectionLog = () => {
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="Delete">
-                                  <IconButton 
-                                    size="small" 
+                                  <IconButton
+                                    size="small"
                                     color="error"
                                     onClick={() => handleAction('delete', inspection)}
                                   >
@@ -627,9 +594,9 @@ export const InspectionLog = () => {
                               Try adjusting your search or filters to find what you're looking for
                             </Typography>
                             {(searchQuery || rankingFilter !== 'All' || filterShop) && (
-                              <Button 
-                                variant="outlined" 
-                                size="small" 
+                              <Button
+                                variant="outlined"
+                                size="small"
                                 onClick={clearFilters}
                                 sx={{ mt: 1 }}
                               >
@@ -647,12 +614,12 @@ export const InspectionLog = () => {
           </>
         )}
       </Box>
-      
+
       {/* View/Edit/Delete Dialog */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={handleDialogClose} 
-        maxWidth="md" 
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
@@ -683,13 +650,52 @@ export const InspectionLog = () => {
             <Grid container spacing={2} sx={{ pt: 1 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Shop Name"
+                  label="Reference ID"
+                  fullWidth
+                  value={selectedInspection.inspectionId}
+                  disabled
+                  margin="dense"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
                   fullWidth
                   value={selectedInspection.shopName}
                   disabled={dialogMode === 'view'}
                   margin="dense"
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Overall Ranking"
+                  fullWidth
+                  value={selectedInspection.overallRating}
+                  disabled
+                  margin="dense"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="GN Division"
+                  fullWidth
+                  value={selectedInspection.GNDivision}
+                  disabled={dialogMode === 'view'}
+                  margin="dense"
+                />
+              </Grid>
+              {dialogMode === 'view' && (
+                <Grid item xs={12}>
+                  <TextField
+                    label="Notes"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={selectedInspection.notes}
+                    disabled
+                    margin="dense"
+                  />
+                </Grid>
+              )}
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="Date"
@@ -701,61 +707,6 @@ export const InspectionLog = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="GN Division"
-                  fullWidth
-                  value={selectedInspection.gnDivision}
-                  disabled={dialogMode === 'view'}
-                  margin="dense"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth margin="dense">
-                  <InputLabel id="ranking-label">Ranking</InputLabel>
-                  <Select
-                    labelId="ranking-label"
-                    value={selectedInspection.ranking}
-                    label="Ranking"
-                    disabled={dialogMode === 'view'}
-                  >
-                    <MenuItem value="A">A - Excellent</MenuItem>
-                    <MenuItem value="B">B - Good</MenuItem>
-                    <MenuItem value="C">C - Fair</MenuItem>
-                    <MenuItem value="D">D - Poor</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Reference ID"
-                  fullWidth
-                  value={selectedInspection.id}
-                  disabled
-                  margin="dense"
-                />
-              </Grid>
-              {dialogMode === 'view' && (
-                <>
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="h6" gutterBottom>
-                      Additional Details
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Notes"
-                      fullWidth
-                      multiline
-                      rows={4}
-                      value="No additional notes for this inspection."
-                      disabled
-                      margin="dense"
-                    />
-                  </Grid>
-                </>
-              )}
             </Grid>
           ) : null}
         </DialogContent>
@@ -769,7 +720,11 @@ export const InspectionLog = () => {
             </Button>
           )}
           {dialogMode === 'delete' && (
-            <Button variant="contained" color="error" onClick={handleDeleteConfirm}>
+            <Button 
+              variant="contained" 
+              color="error" 
+              onClick={handleDeleteConfirm} // Attach the delete confirmation handler
+            >
               Delete
             </Button>
           )}

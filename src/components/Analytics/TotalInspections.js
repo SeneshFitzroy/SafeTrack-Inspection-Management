@@ -19,6 +19,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { getAllInspections } from '../../services/inspectionService'; // Import the API function
 
 ChartJS.register(
   CategoryScale,
@@ -61,21 +62,33 @@ const TotalInspections = ({ month: initialMonth, year: initialYear, monthName: i
 
   const days = getDaysInMonth(month, year);
 
-  // Create more realistic looking data with a pattern and some randomness
-  const generateDailyData = () => {
-    const pattern = [14, 16, 12, 18, 20, 10, 8]; // Weekly pattern (Mon-Sun)
-    return days.map((day, index) => {
-      const baseValue = pattern[index % 7];
-      const randomVariation = Math.floor(Math.random() * 8) - 3; // Random variation between -3 and +4
-      return Math.max(baseValue + randomVariation, 5); // Ensure at least 5 inspections
-    });
-  };
-
-  const [dailyData, setDailyData] = useState(generateDailyData());
+  const [dailyData, setDailyData] = useState([]);
 
   useEffect(() => {
-    // Regenerate data when month/year changes
-    setDailyData(generateDailyData());
+    const fetchInspectionData = async () => {
+      try {
+        const inspections = await getAllInspections();
+        const daysInMonth = getDaysInMonth(month, year);
+        const dailyCounts = Array(daysInMonth.length).fill(0);
+
+        inspections.forEach((inspection) => {
+          const inspectionDate = new Date(inspection.inspectionDate);
+          if (
+            inspectionDate.getMonth() === month &&
+            inspectionDate.getFullYear() === year
+          ) {
+            const day = inspectionDate.getDate();
+            dailyCounts[day - 1] += 1;
+          }
+        });
+
+        setDailyData(dailyCounts);
+      } catch (error) {
+        console.error('Error fetching inspection data:', error);
+      }
+    };
+
+    fetchInspectionData();
   }, [month, year]);
   
   const handleMonthChange = (event) => {

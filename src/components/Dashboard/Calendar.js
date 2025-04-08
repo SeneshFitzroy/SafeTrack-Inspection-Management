@@ -1187,7 +1187,16 @@ export const Calendar = () => {
               label="Time"
               name="time"
               value={newTask.time}
-              onChange={handleTaskInputChange}
+              onChange={(e) => {
+                let value = e.target.value;
+                // Automatically format time as HH:MM AM/PM
+                if (/^\d{2}$/.test(value)) {
+                  value += ':'; // Add colon after first 2 digits
+                } else if (/^\d{2}:\d{2}$/.test(value)) {
+                  value += ' AM'; // Add AM/PM after HH:MM
+                }
+                setNewTask({ ...newTask, time: value });
+              }}
               margin="normal"
               variant="outlined"
               placeholder="e.g. 10:00 AM"

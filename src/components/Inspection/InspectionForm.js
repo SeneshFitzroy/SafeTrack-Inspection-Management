@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Button, 
-  Stepper, 
-  Step, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Stepper,
+  Step,
   StepLabel,
   Container,
   Grid,
@@ -45,6 +45,8 @@ import FoodPreparationForm from './FormSections/FoodPreparationForm';
 import HealthInstructionsForm from './FormSections/HealthInstructionsForm';
 import ReviewSubmission from './FormSections/ReviewSubmission';
 import InspectionDetailsPanel from './InspectionDetailsPanel';
+import { createInspection } from '../../services/inspectionService';
+import { getAllShops, getShopById, getShopByName } from '../../services/shopService';
 
 const steps = [
   'Location & Environment',
@@ -58,13 +60,7 @@ const InspectionForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeStep, setActiveStep] = useState(0);
-  const [shops, setShops] = useState([
-    { id: 'SH001', name: 'Golden Dragon Restaurant', address: '123 Main St' },
-    { id: 'SH002', name: 'Tasty Bakery', address: '456 Oak Ave' },
-    { id: 'SH003', name: 'ABC Cafe & Bakery', address: '789 Pine Rd' },
-    { id: 'SH004', name: 'Sunrise Diner', address: '321 Maple Blvd' },
-    { id: 'SH005', name: 'Spice Heaven', address: '555 Cedar Ln' }
-  ]);
+  const [shops, setShops] = useState([]);
   const [selectedShop, setSelectedShop] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -90,13 +86,13 @@ const InspectionForm = () => {
     safetyMeasures: "Satisfactory",
     flies: "No",
     rodentsPresence: "No",
-    
+
     // Section 3.2 - Structural Condition
     floorMaintenance: "Good",
     wallsMaintenance: "Good",
     ceilingMaintenance: "Good",
     workingSpace: "Adequate",
-    
+
     // Section 3.3 - Hygiene Practices
     dailyCleaning: "Yes",
     contaminationRisk: "No",
@@ -105,7 +101,7 @@ const InspectionForm = () => {
     cleaningTools: "Yes",
     objectionableOdor: "No",
     stagnantWater: "No",
-    
+
     // Section 3.4 - Additional Assessment
     areaUsed: "No",
     separateChoppingBoards: "Yes",
@@ -130,7 +126,9 @@ const InspectionForm = () => {
     inspector: "John Doe", // In a real app this would come from user context
     inspectorNotes: "",
     overallRating: "",
-    photoEvidence: []
+    photoEvidence: [],
+    findings: "",
+    recommendations: ""
   });
 
   const [errors, setErrors] = useState({});
@@ -223,9 +221,83 @@ const InspectionForm = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate saving to database
     try {
-      // In a real app, you would send formData to your API
+      const inspectionDetails = {
+        shopId: selectedShop?.id || formData.shopId || "67f3f0f0fb47fa81070278a4", // Ensure valid ObjectId is used
+        shopName: selectedShop?.name || formData.shopName || "Unknown Shop",
+        shopAddress: selectedShop?.address || formData.shopAddress || "Unknown Address",
+        inspectionDate: new Date().toISOString().split('T')[0],
+        inspectionType: formData.inspectionType || 'Routine',
+        overallRating: formData.overallRating || 'A',
+        status: formData.status || 'Pending',
+        photos: attachments.map(file => ({
+          url: file.url,
+          caption: file.name,
+          timestamp: new Date()
+        })),
+        notes: formData.inspectorNotes || 'No additional notes.',
+        GNDivision: formData.GNDivision || 'Not specified',
+
+        // Part 01 - Location & Environment Assessment
+        locationEnvironment: {
+          locationSuitability: formData.locationSuitability,
+          cleanliness: formData.cleanliness,
+          pollutionConditions: formData.pollutionConditions,
+          animalsPresence: formData.animalsPresence,
+          smokeEffects: formData.smokeEffects
+        },
+
+        // Part 02 - Building Structure & Physical Facilities Assessment
+        buildingStructure: {
+          buildingNature: formData.buildingNature,
+          buildingSpace: formData.buildingSpace,
+          lightVentilation: formData.lightVentilation,
+          floorCondition: formData.floorCondition,
+          wallCondition: formData.wallCondition,
+          ceilingCondition: formData.ceilingCondition,
+          hazards: formData.hazards
+        },
+
+        // Part 03 - Area of Food Preparation/Serving/Display/Storage
+        foodPreparationArea: {
+          generalCleanliness: formData.generalCleanliness,
+          safetyMeasures: formData.safetyMeasures,
+          flies: formData.flies,
+          rodentsPresence: formData.rodentsPresence,
+          floorMaintenance: formData.floorMaintenance,
+          wallsMaintenance: formData.wallsMaintenance,
+          ceilingMaintenance: formData.ceilingMaintenance,
+          workingSpace: formData.workingSpace,
+          dailyCleaning: formData.dailyCleaning,
+          contaminationRisk: formData.contaminationRisk,
+          wasteDisposalBins: formData.wasteDisposalBins,
+          emptyBoxes: formData.emptyBoxes,
+          cleaningTools: formData.cleaningTools,
+          objectionableOdor: formData.objectionableOdor,
+          stagnantWater: formData.stagnantWater,
+          areaUsed: formData.areaUsed,
+          separateChoppingBoards: formData.separateChoppingBoards,
+          cleanlinessOfEquipment: formData.cleanlinessOfEquipment,
+          layoutSuitability: formData.layoutSuitability,
+          ventilation: formData.ventilation,
+          houseKeeping: formData.houseKeeping,
+          waterSupply: formData.waterSupply,
+          safeFoodPractices: formData.safeFoodPractices
+        },
+
+        // Part 04 - Health Instructions, Documentation & Compliance Certification
+        healthInstructions: {
+          displayHealthInstructions: formData.displayHealthInstructions,
+          entertainComplaints: formData.entertainComplaints,
+          preventSmoking: formData.preventSmoking,
+          recordKeeping: formData.recordKeeping,
+          accreditedCertification: formData.accreditedCertification
+        }
+      };
+      const response = await createInspection(inspectionDetails);
+      console.log('Inspection created successfully:', response);
+      setSubmittedData(response);
+      setShowDetails(true);
       console.log("Saving form data:", formData);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       setSaveSuccess(true);
@@ -237,21 +309,31 @@ const InspectionForm = () => {
     }
   };
 
-  const handleShopSelect = (event, shop) => {
+  const handleShopSelect = async (event, shop) => {
     setSelectedShop(shop);
     if (shop) {
-      setFormData(prev => ({
-        ...prev,
-        shopId: shop.id,
-        shopName: shop.name,
-        shopAddress: shop.address
-      }));
+      try {
+        const shopDetails = await getShopByName(shop.name);
+
+        console.log('Shop details:', shopDetails);
+        
+        setFormData(prev => ({
+          ...prev,
+          shopId: shop.id,
+          shopName: shop.name,
+          shopAddress: shop.address,
+          GNDivision: shopDetails.gnDivision || 'Not specified'
+        }));
+      } catch (error) {
+        console.error('Error fetching shop details:', error);
+      }
     } else {
       setFormData(prev => ({
         ...prev,
-        shopId: "",
-        shopName: "",
-        shopAddress: ""
+        shopId: '',
+        shopName: '',
+        shopAddress: '',
+        GNDivision: 'Not specified'
       }));
     }
   };
@@ -271,9 +353,22 @@ const InspectionForm = () => {
     }
   }, [location.state?.shopId, shops]);
 
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        const shopsData = await getAllShops();
+        setShops(shopsData);
+      } catch (error) {
+        console.error('Error fetching shops:', error);
+      }
+    };
+
+    fetchShops();
+  }, []);
+
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    
+
     const newFiles = selectedFiles.map(file => ({
       file,
       name: file.name,
@@ -281,29 +376,29 @@ const InspectionForm = () => {
       size: file.size,
       url: URL.createObjectURL(file)
     }));
-    
+
     setAttachments(prevAttachments => [...prevAttachments, ...newFiles]);
-    
+
     setFormData(prevData => ({
       ...prevData,
       photoEvidence: [...(prevData.photoEvidence || []), ...newFiles.map(f => f.name)]
     }));
-    
+
     e.target.value = null;
   };
 
   const handleRemoveFile = (index) => {
     setAttachments(prevAttachments => {
       const newAttachments = [...prevAttachments];
-      
+
       if (newAttachments[index].url) {
         URL.revokeObjectURL(newAttachments[index].url);
       }
-      
+
       newAttachments.splice(index, 1);
       return newAttachments;
     });
-    
+
     setFormData(prevData => ({
       ...prevData,
       photoEvidence: prevData.photoEvidence.filter((_, i) => i !== index)
@@ -327,29 +422,103 @@ const InspectionForm = () => {
   };
 
   const handleSubmit = async () => {
+    if (!selectedShop) {
+      setErrors({ shopId: 'Please select a valid shop.' });
+      return;
+    }
+
     if (validateCurrentStep()) {
       setIsSaving(true);
       try {
         const inspectionDetails = {
-          shopName: formData.shopName || selectedShop?.name || "Unnamed Establishment",
-          shopId: formData.shopId || selectedShop?.id || "ID Pending",
-          inspector: formData.inspector || "John Doe",
-          date: new Date().toISOString().split('T')[0],
-          status: formData.overallRating || "N/A",
-          cleanliness: calculateCleanlinessRating(),
-          documentation: calculateDocumentationPercentage(),
-          staffTraining: determineStaffTraining(),
-          highlights: generateHighlights(),
-          recommendations: generateRecommendations(),
-          inspectorNotes: formData.inspectorNotes || "",
-          attachments: attachments.map(att => att.name)
+          shopId: selectedShop?.id || formData.shopId || "67f3f0f0fb47fa81070278a4", // Ensure valid ObjectId is used
+          shopName: selectedShop?.name || formData.shopName || "Unknown Shop",
+          shopAddress: selectedShop?.address || formData.shopAddress || "Unknown Address",
+          inspectionDate: new Date().toISOString().split('T')[0],
+          inspectionType: formData.inspectionType || 'Routine',
+          findings: formData.findings || 'No findings recorded.',
+          recommendations: formData.recommendations || 'No recommendations provided.',
+          compliance: {
+            foodHandling: formData.foodHandling || 0,
+            sanitationCleanliness: formData.sanitationCleanliness || 0,
+            wasteManagement: formData.wasteManagement || 0,
+            pestControl: formData.pestControl || 0,
+            waterQuality: formData.waterQuality || 0
+          },
+          overallRating: formData.overallRating || 'A',
+          status: formData.status || 'Pending',
+          photos: attachments.map(file => ({
+            url: file.url,
+            caption: file.name,
+            timestamp: new Date()
+          })),
+          notes: formData.inspectorNotes || 'No additional notes.',
+          GNDivision: formData.GNDivision || 'Not specified',
+
+          // Part 01 - Location & Environment Assessment
+          locationEnvironment: {
+            locationSuitability: formData.locationSuitability,
+            cleanliness: formData.cleanliness,
+            pollutionConditions: formData.pollutionConditions,
+            animalsPresence: formData.animalsPresence,
+            smokeEffects: formData.smokeEffects
+          },
+
+          // Part 02 - Building Structure & Physical Facilities Assessment
+          buildingStructure: {
+            buildingNature: formData.buildingNature,
+            buildingSpace: formData.buildingSpace,
+            lightVentilation: formData.lightVentilation,
+            floorCondition: formData.floorCondition,
+            wallCondition: formData.wallCondition,
+            ceilingCondition: formData.ceilingCondition,
+            hazards: formData.hazards
+          },
+
+          // Part 03 - Area of Food Preparation/Serving/Display/Storage
+          foodPreparationArea: {
+            generalCleanliness: formData.generalCleanliness,
+            safetyMeasures: formData.safetyMeasures,
+            flies: formData.flies,
+            rodentsPresence: formData.rodentsPresence,
+            floorMaintenance: formData.floorMaintenance,
+            wallsMaintenance: formData.wallsMaintenance,
+            ceilingMaintenance: formData.ceilingMaintenance,
+            workingSpace: formData.workingSpace,
+            dailyCleaning: formData.dailyCleaning,
+            contaminationRisk: formData.contaminationRisk,
+            wasteDisposalBins: formData.wasteDisposalBins,
+            emptyBoxes: formData.emptyBoxes,
+            cleaningTools: formData.cleaningTools,
+            objectionableOdor: formData.objectionableOdor,
+            stagnantWater: formData.stagnantWater,
+            areaUsed: formData.areaUsed,
+            separateChoppingBoards: formData.separateChoppingBoards,
+            cleanlinessOfEquipment: formData.cleanlinessOfEquipment,
+            layoutSuitability: formData.layoutSuitability,
+            ventilation: formData.ventilation,
+            houseKeeping: formData.houseKeeping,
+            waterSupply: formData.waterSupply,
+            safeFoodPractices: formData.safeFoodPractices
+          },
+
+          // Part 04 - Health Instructions, Documentation & Compliance Certification
+          healthInstructions: {
+            displayHealthInstructions: formData.displayHealthInstructions,
+            entertainComplaints: formData.entertainComplaints,
+            preventSmoking: formData.preventSmoking,
+            recordKeeping: formData.recordKeeping,
+            accreditedCertification: formData.accreditedCertification
+          }
         };
-        
-        setSubmittedData(inspectionDetails);
+
+        const response = await createInspection(inspectionDetails);
+        console.log('Inspection created successfully:', response);
+        setSubmittedData(response);
         setShowDetails(true);
       } catch (error) {
-        console.error("Error submitting form:", error);
-        setErrors({ submit: "Failed to submit the form. Please try again." });
+        console.error('Error submitting inspection:', error);
+        setErrors({ submit: 'Failed to submit the inspection. Please try again.' });
       } finally {
         setIsSaving(false);
       }
@@ -358,35 +527,35 @@ const InspectionForm = () => {
 
   const calculateCleanlinessRating = () => {
     let score = 3;
-    
+
     if (formData.cleanliness === "Satisfying") score += 0.5;
     if (formData.generalCleanliness === "Satisfactory") score += 0.5;
     if (formData.floorMaintenance === "Good") score += 0.25;
     if (formData.wallsMaintenance === "Good") score += 0.25;
     if (formData.ceilingMaintenance === "Good") score += 0.25;
     if (formData.cleanlinessOfEquipment === "Good") score += 0.25;
-    
+
     if (formData.flies === "Yes") score -= 0.5;
     if (formData.rodentsPresence === "Yes") score -= 0.5;
     if (formData.emptyBoxes === "Yes") score -= 0.25;
     if (formData.objectionableOdor === "Yes") score -= 0.25;
-    
+
     return Math.max(1, Math.min(5, Math.round(score * 2) / 2));
   };
 
   const calculateDocumentationPercentage = () => {
     let percentage = 0;
     let total = 0;
-    
+
     if (formData.displayHealthInstructions === "Yes") { percentage += 20; total += 20; }
     else if (formData.displayHealthInstructions === "No") { total += 20; }
-    
+
     if (formData.recordKeeping === "Yes") { percentage += 30; total += 30; }
     else if (formData.recordKeeping === "No") { total += 30; }
-    
+
     if (formData.accreditedCertification === "Yes") { percentage += 50; total += 50; }
     else if (formData.accreditedCertification === "No") { total += 50; }
-    
+
     return total > 0 ? Math.round((percentage / total) * 100) : 100;
   };
 
@@ -418,18 +587,18 @@ const InspectionForm = () => {
     }
 
     return recommendations.length > 0 ? recommendations : [
-      "Continue maintaining current standards", 
+      "Continue maintaining current standards",
       "Schedule regular self-inspections to maintain compliance"
     ];
   };
 
   const handleCloseDetails = () => {
     setShowDetails(false);
-    navigate('/inspection-log', { 
-      state: { 
+    navigate('/inspection-log', {
+      state: {
         message: 'Inspection successfully submitted!',
         severity: 'success'
-      } 
+      }
     });
   };
 
@@ -440,7 +609,7 @@ const InspectionForm = () => {
         <Typography variant="body1" paragraph>
           Please review the information below before submitting your inspection report.
         </Typography>
-        
+
         <FormControl fullWidth margin="normal" error={!!errors.overallRating}>
           <InputLabel id="overall-rating-label">Overall Rating</InputLabel>
           <Select
@@ -458,7 +627,7 @@ const InspectionForm = () => {
           </Select>
           {errors.overallRating && <FormHelperText>{errors.overallRating}</FormHelperText>}
         </FormControl>
-        
+
         <FormControl fullWidth margin="normal">
           <TextField
             id="inspectorNotes"
@@ -472,12 +641,12 @@ const InspectionForm = () => {
           />
           <FormHelperText>Add any additional observations or notes about this inspection.</FormHelperText>
         </FormControl>
-        
+
         <Box sx={{ mt: 3, mb: 2 }}>
           <Typography variant="subtitle1" gutterBottom>
             Photo Evidence & Attachments
           </Typography>
-          
+
           <Box sx={{ mb: 2 }}>
             <Button
               variant="outlined"
@@ -495,7 +664,7 @@ const InspectionForm = () => {
               style={{ display: 'none' }}
               accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
             />
-            
+
             {attachments.length > 0 ? (
               <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                 <List dense>
@@ -534,35 +703,35 @@ const InspectionForm = () => {
   const getStepContent = (step) => {
     switch (step) {
       case 0:
-        return <LocationEnvironmentForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                errors={errors} 
-              />;
+        return <LocationEnvironmentForm
+          formData={formData}
+          handleChange={handleChange}
+          errors={errors}
+        />;
       case 1:
-        return <BuildingAssessmentForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                errors={errors} 
-              />;
+        return <BuildingAssessmentForm
+          formData={formData}
+          handleChange={handleChange}
+          errors={errors}
+        />;
       case 2:
-        return <FoodPreparationForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                errors={errors} 
-              />;
+        return <FoodPreparationForm
+          formData={formData}
+          handleChange={handleChange}
+          errors={errors}
+        />;
       case 3:
-        return <HealthInstructionsForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                errors={errors} 
-              />;
+        return <HealthInstructionsForm
+          formData={formData}
+          handleChange={handleChange}
+          errors={errors}
+        />;
       case 4:
-        return <ReviewSubmission 
-                formData={formData} 
-                handleChange={handleChange} 
-                errors={errors} 
-              />;
+        return <ReviewSubmission
+          formData={formData}
+          handleChange={handleChange}
+          errors={errors}
+        />;
       default:
         return 'Unknown step';
     }
@@ -571,7 +740,7 @@ const InspectionForm = () => {
   if (showDetails && submittedData) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-        <InspectionDetailsPanel 
+        <InspectionDetailsPanel
           isOpen={showDetails}
           onClose={handleCloseDetails}
           inspectionData={submittedData}
@@ -581,17 +750,17 @@ const InspectionForm = () => {
   }
 
   return (
-    <Box sx={{ 
-      width: '100%', 
-      height: '100vh', 
+    <Box sx={{
+      width: '100%',
+      height: '100vh',
       display: 'flex',
       flexDirection: 'column',
       bgcolor: '#F5F8FF'
     }}>
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: { xs: 2, md: 4 }, 
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, md: 4 },
           borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',
@@ -603,9 +772,9 @@ const InspectionForm = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton 
-            edge="start" 
-            onClick={() => navigate('/inspection-log')} 
+          <IconButton
+            edge="start"
+            onClick={() => navigate('/inspection-log')}
             sx={{ mr: 2 }}
             color="primary"
           >
@@ -631,9 +800,9 @@ const InspectionForm = () => {
               onChange={handleShopSelect}
               getOptionLabel={(option) => option.name}
               renderInput={(params) => (
-                <TextField 
-                  {...params} 
-                  label="Search for shop by name" 
+                <TextField
+                  {...params}
+                  label="Search for shop by name"
                   variant="outlined"
                   error={!!errors.shopId}
                   helperText={errors.shopId}
@@ -660,8 +829,8 @@ const InspectionForm = () => {
         )}
 
         {saveSuccess && (
-          <Alert 
-            severity="success" 
+          <Alert
+            severity="success"
             sx={{ mb: 3 }}
             icon={<CheckCircleIcon fontSize="inherit" />}
           >
@@ -675,10 +844,10 @@ const InspectionForm = () => {
           </Alert>
         )}
 
-        <Stepper 
-          activeStep={activeStep} 
+        <Stepper
+          activeStep={activeStep}
           alternativeLabel
-          sx={{ 
+          sx={{
             mb: 4,
             '& .MuiStepLabel-label': {
               mt: 1,
@@ -729,5 +898,4 @@ const InspectionForm = () => {
     </Box>
   );
 };
-
 export default InspectionForm;

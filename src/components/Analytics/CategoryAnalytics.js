@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,60 +14,61 @@ import {
 } from '@mui/material';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { green, red, amber, blue, purple, grey } from '@mui/material/colors';
+import { getAllInspections } from '../../services/inspectionService';
+import { getShopByName } from '../../services/shopService';
 
 const CategoryAnalytics = ({ month, year, monthName }) => {
-  // Mock data for category distribution
-  const [categories, setCategories] = useState([
-    { 
-      name: 'Food', 
-      count: 45, 
-      passRate: 78, 
-      inspected: 38, 
-      avgScore: 82,
-      color: red[500],
-      icon: <RestaurantIcon />
-    },
-    { 
-      name: 'Groceries', 
-      count: 32, 
-      passRate: 84, 
-      inspected: 30, 
-      avgScore: 88,
-      color: green[500],
-      icon: <LocalGroceryStoreIcon />
-    },
-    { 
-      name: 'Retail', 
-      count: 28, 
-      passRate: 90, 
-      inspected: 25, 
-      avgScore: 92,
-      color: blue[500],
-      icon: <ShoppingBagIcon />
-    },
-    { 
-      name: 'Healthcare', 
-      count: 12, 
-      passRate: 95, 
-      inspected: 10, 
-      avgScore: 95,
-      color: purple[500],
-      icon: <HealthAndSafetyIcon />
-    },
-    { 
-      name: 'Other', 
-      count: 18, 
-      passRate: 82, 
-      inspected: 15, 
-      avgScore: 85,
-      color: grey[500],
-      icon: <StorefrontIcon />
-    }
-  ]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchInspections = async () => {
+      try {
+        const inspections = await getAllInspections();
+        const categoryData = await inspections.reduce(async (accPromise, inspection) => {
+          const acc = await accPromise;
+          let category = inspection.category;
+
+          if (!category) {
+            try {
+              const shopDetails = await getShopByName(inspection.shopName);
+              category = shopDetails?.category || 'Other';
+            } catch (error) {
+              console.error(`Error fetching shop details for ${inspection.shopName}:`, error);
+              category = 'Other';
+            }
+          }
+
+          if (!acc[category]) {
+            acc[category] = { count: 0, inspected: 0, passRate: 0, avgScore: 0 };
+          }
+          acc[category].count += 1;
+          acc[category].inspected += inspection.status === 'Completed' ? 1 : 0;
+          acc[category].passRate += inspection.overallRating === 'A' ? 1 : 0;
+          acc[category].avgScore += inspection.score || 0;
+          return acc;
+        }, Promise.resolve({}));
+
+        const formattedCategories = Object.entries(categoryData).map(([name, data]) => ({
+          name,
+          count: data.count,
+          inspected: data.inspected,
+          passRate: Math.round((data.passRate / data.count) * 100),
+          avgScore: Math.round(data.avgScore / data.count),
+          color: name === 'Food' ? red[500] : name === 'Groceries' ? green[500] : blue[500],
+          icon: name === 'Food' ? <RestaurantIcon /> : name === 'Groceries' ? <LocalGroceryStoreIcon /> : <StorefrontIcon />,
+          riskLevel: data.avgScore > 80 ? 'Low Risk' : data.avgScore > 60 ? 'Medium Risk' : data.avgScore > 40 ? 'High Risk' : 'Critical Risk'
+        }));
+
+        setCategories(formattedCategories);
+      } catch (error) {
+        console.error('Error fetching inspections:', error);
+      }
+    };
+
+    fetchInspections();
+  }, []);
 
   return (
     <Box>
@@ -165,20 +166,20 @@ const CategoryAnalytics = ({ month, year, monthName }) => {
                   <TableCell align="center">
                     <Chip 
                       label={
-                        category.avgScore > 90 ? 'Low Risk' :
-                        category.avgScore > 80 ? 'Medium Risk' :
-                        category.avgScore > 70 ? 'High Risk' : 'Critical Risk'
+                        category.avgScore > 80 ? 'Low Risk' :
+                        category.avgScore > 60 ? 'Medium Risk' :
+                        category.avgScore > 40 ? 'High Risk' : 'Critical Risk'
                       } 
                       size="small"
                       sx={{ 
                         bgcolor: 
-                          category.avgScore > 90 ? green[100] :
-                          category.avgScore > 80 ? blue[100] :
-                          category.avgScore > 70 ? amber[100] : red[100],
+                          category.avgScore > 80 ? green[100] :
+                          category.avgScore > 60 ? blue[100] :
+                          category.avgScore > 40 ? amber[100] : red[100],
                         color: 
-                          category.avgScore > 90 ? green[800] :
-                          category.avgScore > 80 ? blue[800] :
-                          category.avgScore > 70 ? amber[800] : red[800],
+                          category.avgScore > 80 ? green[800] :
+                          category.avgScore > 60 ? blue[800] :
+                          category.avgScore > 40 ? amber[800] : red[800],
                         fontWeight: 'bold',
                         minWidth: 100
                       }}

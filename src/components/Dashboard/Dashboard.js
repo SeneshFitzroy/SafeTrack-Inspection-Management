@@ -50,12 +50,15 @@ import { Line, Pie } from 'react-chartjs-2';
 import Header from '../common/Header';
 import Sidebar from '../common/Sidebar';
 
-import { 
-  getAllShops, 
+import {
+  getAllShops,
+  getShopsByDivision
 } from '../../services/shopService';
 
 // Import calendar service to fetch tasks
 import * as calendarService from '../../services/calendarService';
+
+import { getAllInspections } from '../../services/inspectionService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -77,6 +80,12 @@ const Dashboard = () => {
   const [shopCount, setShopCount] = useState(0);
   const [tasks, setTasks] = useState([]);
   const [pendingTasksCount, setPendingTasksCount] = useState(0);
+  const [totalInspections, setTotalInspections] = useState(0);
+  const [pendingInspections, setPendingInspections] = useState(0);
+  const [riskInspection, setRisk] = useState(0);
+  const [inspections, setInspections] = useState([]);
+  const [completionRate, setCompletionRate] = useState(0);
+  const [shopsByDivision, setShopsByDivision] = useState([]);
 
   // Check authentication
   useEffect(() => {
@@ -104,7 +113,7 @@ const Dashboard = () => {
 
     fetchShops();
   }, []);
-  
+
   // Fetch tasks when component mounts
   useEffect(() => {
     const fetchTasks = async () => {
@@ -117,7 +126,7 @@ const Dashboard = () => {
           date: new Date(task.date)
         }));
         setTasks(formattedTasks);
-        
+
         // Count pending tasks
         const pendingTasks = formattedTasks.filter(task => task.status === 'pending');
         setPendingTasksCount(pendingTasks.length);
@@ -130,15 +139,62 @@ const Dashboard = () => {
 
     fetchTasks();
   }, []);
-  
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const inspections = await getAllInspections();
+        setInspections(inspections);
+
+        // Total inspections
+        const totalInspections = inspections.length;
+        setTotalInspections(totalInspections);
+
+        // Pending tasks count
+        const pendingTasks = inspections.filter(inspection => inspection.status === 'Pending').length;
+        setPendingInspections(pendingTasks);
+
+        // High-risk shops count
+        const highRiskShops = inspections.filter(inspection => inspection.overallRating === 'D').length;
+        setRisk(highRiskShops)
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Calculate completion rate based on completed tasks
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const completedTasks = tasks.filter(task => task.status === 'completed').length;
+      const completionRate = ((completedTasks / tasks.length) * 100).toFixed(2);
+      setCompletionRate(completionRate);
+    }
+  }, [tasks]);
+
+  useEffect(() => {
+    const fetchShopsByDivision = async () => {
+      try {
+        const data = await getShopsByDivision();
+        setShopsByDivision(data);
+      } catch (error) {
+        console.error('Error fetching shops by division:', error);
+      }
+    };
+
+    fetchShopsByDivision();
+  }, []);
+
   // Task helper functions
   const getUpcomingTasks = (days = 7) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day
-    
+
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + days);
-    
+
     return tasks
       .filter(task => {
         const taskDate = new Date(task.date);
@@ -148,14 +204,14 @@ const Dashboard = () => {
       })
       .sort((a, b) => new Date(a.date) - new Date(b.date));
   };
-  
+
   const getPastTasks = (days = 7) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day
-    
+
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - days);
-    
+
     return tasks
       .filter(task => {
         const taskDate = new Date(task.date);
@@ -164,54 +220,53 @@ const Dashboard = () => {
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date)); // Most recent first
   };
-  
+
   // Format date helper
   const formatTaskDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
   // Dashboard data for metrics
   const dashboardData = {
     totalShops: shopCount,
-    totalInspections: 1520,
-    pendingInspections: 12,
-    highRiskShops: 18,
+    totalInspections: totalInspections,
+    pendingInspections: pendingInspections,
+    highRiskShops: riskInspection,
     rankings: {
-      A: 65,
-      B: 22,
-      C: 10,
-      D: 3
+      A: inspections.filter(inspection => inspection.overallRating === 'A').length,
+      B: inspections.filter(inspection => inspection.overallRating === 'B').length,
+      C: inspections.filter(inspection => inspection.overallRating === 'C').length,
+      D: inspections.filter(inspection => inspection.overallRating === 'D').length
     },
-    recentInspections: [
-      { id: 13245, date: '2024-10-28', shopName: 'Family Pharmacy', inspector: 'Michael Brown', ranking: 'A', status: 'No violations found', location: 'Biyagama' },
-      { id: 13244, date: '2024-10-25', shopName: 'Tech Haven Electronics', inspector: 'Jane Smith', ranking: 'C', status: 'Minor violations', location: 'Kelaniya' },
-      { id: 13243, date: '2024-10-22', shopName: 'Tasty Delights Restaurant', inspector: 'John Doe', ranking: 'B', status: 'Good standing', location: 'Kaduwela' },
-      { id: 13242, date: '2024-10-20', shopName: 'Fresh Market Grocery', inspector: 'Emily Wilson', ranking: 'A', status: 'Excellent compliance', location: 'Kolonnawa' },
-      { id: 13241, date: '2024-10-18', shopName: 'Central Pharmacy', inspector: 'Robert Chen', ranking: 'B', status: 'Minor issues resolved', location: 'Biyagama' },
-    ],
-    upcomingInspections: [
-      { id: 13246, date: '2024-11-02', shopName: 'Green Garden Groceries', inspector: 'Jane Smith', time: '10:00 AM', type: 'Regular', location: 'Kelaniya' },
-      { id: 13247, date: '2024-11-05', shopName: 'Super Electronics', inspector: 'Michael Brown', time: '2:30 PM', type: 'Follow-up', location: 'Biyagama' },
-      { id: 13248, date: '2024-11-08', shopName: 'Coffee Corner', inspector: 'John Doe', time: '9:00 AM', type: 'Regular', location: 'Kaduwela' },
-      { id: 13249, date: '2024-11-10', shopName: 'Sunshine Bakery', inspector: 'Emily Wilson', time: '11:30 AM', type: 'Complaint', location: 'Kolonnawa' },
-      { id: 13250, date: '2024-11-12', shopName: 'Health First Pharmacy', inspector: 'Robert Chen', time: '1:00 PM', type: 'Regular', location: 'Biyagama' },
-    ]
+    recentInspections: inspections.slice(-5).map(inspection => ({
+      id: inspection.id,
+      date: inspection.date,
+      shopName: inspection.shopName,
+      inspector: inspection.inspector,
+      ranking: inspection.overallRating,
+      status: inspection.status,
+      location: inspection.location
+    })),
+    upcomingInspections: inspections.filter(inspection => new Date(inspection.date) > new Date()).slice(0, 5).map(inspection => ({
+      id: inspection.id,
+      date: inspection.date,
+      shopName: inspection.shopName,
+      inspector: inspection.inspector,
+      time: inspection.time,
+      type: inspection.type,
+      location: inspection.location
+    }))
   };
 
   // More comprehensive data for a fuller dashboard
   const additionalData = {
-    inspectionCompletion: 87,
+    inspectionCompletion: completionRate,
     trendData: [42, 47, 53, 58, 63, 68, 65],
-    shopsByDivision: [
-      { division: 'Biyagama', count: 78 },
-      { division: 'Kelaniya', count: 52 },
-      { division: 'Kaduwela', count: 65 },
-      { division: 'Kolonnawa', count: 53 }
-    ],
+    shopsByDivision: shopsByDivision,
     quickStats: [
       { label: 'Active Inspectors', value: 12, trend: '+2', color: theme.palette.primary.main },
       { label: 'Overdue Tasks', value: 8, trend: '-3', color: theme.palette.error.main },
@@ -421,27 +476,6 @@ const Dashboard = () => {
       }
     },
     cutout: '60%'
-  };
-
-  // Function to determine ranking color
-  const getRankingColor = (ranking) => {
-    switch (ranking) {
-      case 'A': return theme.palette.success.main;
-      case 'B': return theme.palette.warning.light;
-      case 'C': return theme.palette.warning.main;
-      case 'D': return theme.palette.error.main;
-      default: return theme.palette.text.secondary;
-    }
-  };
-
-  // Helper function for inspection type colors
-  const getInspectionTypeColor = (type) => {
-    switch (type) {
-      case 'Regular': return '#4caf50';
-      case 'Follow-up': return '#ff9800';
-      case 'Complaint': return '#f44336';
-      default: return '#2196f3';
-    }
   };
 
   // Enhanced card styles with more refined aesthetics and consistent spacing
@@ -926,9 +960,9 @@ const Dashboard = () => {
                             <Box sx={{ display: 'flex', flex: 1, mr: 1.5 }}>
                               <Avatar
                                 sx={{
-                                  bgcolor: task.status === 'completed' ? theme.palette.success.main : 
-                                           task.status === 'overdue' ? theme.palette.error.main :
-                                           theme.palette.warning.main,
+                                  bgcolor: task.status === 'completed' ? theme.palette.success.main :
+                                    task.status === 'overdue' ? theme.palette.error.main :
+                                      theme.palette.warning.main,
                                   width: 40, // Smaller avatar
                                   height: 40,
                                   mr: 2,
@@ -957,12 +991,12 @@ const Dashboard = () => {
                               size="small"
                               sx={{
                                 mt: 0.5,
-                                backgroundColor: task.status === 'completed' ? `${theme.palette.success.main}15` : 
-                                                 task.status === 'overdue' ? `${theme.palette.error.main}15` :
-                                                 `${theme.palette.warning.main}15`,
-                                color: task.status === 'completed' ? theme.palette.success.main : 
-                                       task.status === 'overdue' ? theme.palette.error.main :
-                                       theme.palette.warning.main,
+                                backgroundColor: task.status === 'completed' ? `${theme.palette.success.main}15` :
+                                  task.status === 'overdue' ? `${theme.palette.error.main}15` :
+                                    `${theme.palette.warning.main}15`,
+                                color: task.status === 'completed' ? theme.palette.success.main :
+                                  task.status === 'overdue' ? theme.palette.error.main :
+                                    theme.palette.warning.main,
                                 borderRadius: 1,
                                 height: 24,
                                 fontSize: '0.75rem'
@@ -1036,7 +1070,7 @@ const Dashboard = () => {
                 <List sx={{
                   p: 0,
                   overflow: 'auto',
-                  minHeight: { xs: 300, md: 350 }, 
+                  minHeight: { xs: 300, md: 350 },
                   maxHeight: { xs: 300, md: 350 },
                   display: 'flex',
                   flexDirection: 'column',
@@ -1127,9 +1161,9 @@ const Dashboard = () => {
                               label={task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                               size="small"
                               sx={{
-                                backgroundColor: task.status === 'completed' ? theme.palette.success.main : 
-                                                 task.status === 'overdue' ? theme.palette.error.main :
-                                                 theme.palette.warning.main,
+                                backgroundColor: task.status === 'completed' ? theme.palette.success.main :
+                                  task.status === 'overdue' ? theme.palette.error.main :
+                                    theme.palette.warning.main,
                                 color: 'white',
                                 ml: 1,
                                 borderRadius: 1,

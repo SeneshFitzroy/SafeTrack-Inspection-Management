@@ -29,6 +29,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import { red, orange, yellow, green } from '@mui/material/colors';
+import { getAllInspections } from '../../services/inspectionService';
 
 const HighRiskShops = ({ month, year, monthName }) => {
   const [page, setPage] = useState(0);
@@ -37,87 +38,21 @@ const HighRiskShops = ({ month, year, monthName }) => {
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
   
-  const [highRiskShops, setHighRiskShops] = useState([
-    { 
-      id: '13236', 
-      name: 'ABC Cafe & Bakery', 
-      category: 'Food', 
-      region: 'Biyagama', 
-      riskLevel: 'D',
-      lastInspection: '2023-10-15', 
-      nextInspection: '2023-10-28', 
-      violation: 'Food Storage Violation',
-      priority: 'Critical'
-    },
-    { 
-      id: '13237', 
-      name: 'Sunrise Groceries', 
-      category: 'Groceries', 
-      region: 'Kaduwela', 
-      riskLevel: 'C',
-      lastInspection: '2023-10-10', 
-      nextInspection: '2023-10-25', 
-      violation: 'Expired Products',
-      priority: 'High'
-    },
-    { 
-      id: '13240', 
-      name: 'Urban Trends Clothing', 
-      category: 'Retail', 
-      region: 'Kaduwela', 
-      riskLevel: 'C',
-      lastInspection: '2023-10-08', 
-      nextInspection: '2023-10-23', 
-      violation: 'Fire Safety Issues',
-      priority: 'High'
-    },
-    { 
-      id: '13245', 
-      name: 'Fresh Eats Restaurant', 
-      category: 'Food', 
-      region: 'Biyagama', 
-      riskLevel: 'D',
-      lastInspection: '2023-10-05', 
-      nextInspection: '2023-10-20', 
-      violation: 'Sanitation Issues',
-      priority: 'Critical'
-    },
-    { 
-      id: '13249', 
-      name: 'Blue Ocean Seafood', 
-      category: 'Food', 
-      region: 'Kolonnawa', 
-      riskLevel: 'D',
-      lastInspection: '2023-10-03', 
-      nextInspection: '2023-10-18', 
-      violation: 'Refrigeration Failure',
-      priority: 'Critical'
-    },
-    { 
-      id: '13252', 
-      name: 'Green Grocers', 
-      category: 'Groceries', 
-      region: 'Kelaniya', 
-      riskLevel: 'C',
-      lastInspection: '2023-09-28', 
-      nextInspection: '2023-10-15', 
-      violation: 'Pest Control Issues',
-      priority: 'High'
-    },
-    { 
-      id: '13256', 
-      name: 'The Spice Lounge', 
-      category: 'Food', 
-      region: 'Biyagama', 
-      riskLevel: 'C',
-      lastInspection: '2023-09-25', 
-      nextInspection: '2023-10-12', 
-      violation: 'Employee Hygiene',
-      priority: 'High'
-    },
-  ]);
-
+  const [highRiskShops, setHighRiskShops] = useState([]);
   const [filteredShops, setFilteredShops] = useState(highRiskShops);
+
+  useEffect(() => {
+    const fetchInspections = async () => {
+      try {
+        const inspections = await getAllInspections();
+        setHighRiskShops(inspections);
+      } catch (error) {
+        console.error('Error fetching inspections:', error);
+      }
+    };
+
+    fetchInspections();
+  }, []);
 
   useEffect(() => {
     let result = [...highRiskShops];
@@ -139,6 +74,8 @@ const HighRiskShops = ({ month, year, monthName }) => {
     if (categoryFilter !== 'All') {
       result = result.filter(shop => shop.category === categoryFilter);
     }
+
+    result = result.filter(shop => shop.overallRating === 'D');
     
     setFilteredShops(result);
     setPage(0);
@@ -164,10 +101,17 @@ const HighRiskShops = ({ month, year, monthName }) => {
   };
 
   const getCategoryIcon = (category) => {
-    switch(category.toLowerCase()) {
-      case 'food': return <RestaurantIcon fontSize="small" />;
-      case 'groceries': return <LocalGroceryStoreIcon fontSize="small" />;
-      default: return <StorefrontIcon fontSize="small" />;
+    if (!category) {
+      return <StorefrontIcon fontSize="small" />; // Default icon if category is undefined
+    }
+
+    switch (category.toLowerCase()) {
+      case 'food':
+        return <RestaurantIcon fontSize="small" />;
+      case 'groceries':
+        return <LocalGroceryStoreIcon fontSize="small" />;
+      default:
+        return <StorefrontIcon fontSize="small" />;
     }
   };
 
@@ -302,12 +246,12 @@ const HighRiskShops = ({ month, year, monthName }) => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Shop ID</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Inspection ID</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Shop Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Risk Level</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Last Inspection</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Next Inspection</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Priority</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>GN Division</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Inspection Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Overall Rating</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -316,7 +260,7 @@ const HighRiskShops = ({ month, year, monthName }) => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((shop) => (
                     <TableRow 
-                      key={shop.id} 
+                      key={shop.inspectionId} 
                       hover
                       sx={{ 
                         '&:hover': { 
@@ -329,50 +273,24 @@ const HighRiskShops = ({ month, year, monthName }) => {
                       }}
                     >
                       <TableCell>
-                        <Typography fontWeight="medium">{shop.id}</Typography>
+                        <Typography fontWeight="medium">{shop.inspectionId.slice(0, 9)}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box sx={{ mr: 1 }}>
-                            {getCategoryIcon(shop.category)}
-                          </Box>
-                          <Box>
-                            <Typography fontWeight="medium">{shop.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">{shop.region}</Typography>
-                          </Box>
-                        </Box>
+                        <Typography fontWeight="medium">{shop.shopName}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography 
-                          fontWeight="bold" 
-                          color={getRiskLevelColor(shop.riskLevel)}
-                        >
-                          {shop.riskLevel}
+                        <Typography>{shop.GNDivision}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography>{shop.inspectionType}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography fontWeight="bold" color={getRiskLevelColor(shop.overallRating)}>
+                          {shop.overallRating}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <EventBusyIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                          <Typography>{shop.lastInspection}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <ScheduleIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                          <Typography>{shop.nextInspection}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={shop.priority} 
-                          size="small"
-                          variant="outlined"
-                          sx={{ 
-                            ...getPriorityChipColor(shop.priority), 
-                            fontWeight: 'bold',
-                            minWidth: 80,
-                          }}
-                        />
+                        <Typography>{shop.status}</Typography>
                       </TableCell>
                     </TableRow>
                   ))

@@ -10,7 +10,6 @@ const router = express.Router();
 router.post('/', auth, async (req, res) => {
   try {
     // Debug user information
-    console.log('POST /api/shops - Creating shop for user ID:', req.user._id);
     
     const { 
       name, 
@@ -57,11 +56,7 @@ router.post('/', auth, async (req, res) => {
       licenseYear,
       createdBy: req.user._id
     });
-
-    console.log('New shop being created with createdBy:', newShop.createdBy);
-    
     const shop = await newShop.save();
-    console.log('Shop saved successfully with ID:', shop._id);
 
     res.status(201).json(shop);
   } catch (error) {
@@ -75,22 +70,28 @@ router.post('/', auth, async (req, res) => {
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
-    // Debug user information
-    console.log('GET /api/shops - User ID from token:', req.user._id);
     
-    // Filter shops by the current user's ID
     const shops = await Shop.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
-    
-    console.log(`Found ${shops.length} shops for user ${req.user._id}`);
-    
-    // Log shop IDs and their createdBy fields for debugging
-    shops.forEach(shop => {
-      console.log(`Shop ${shop._id}, createdBy: ${shop.createdBy}`);
-    });
     
     res.json(shops);
   } catch (error) {
     console.error('Get shops error:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Ensure this route is defined before any route with ':id'
+router.get('/divisions', auth, async (req, res) => {
+  try {
+    const shopsByDivision = await Shop.aggregate([
+      { $match: { createdBy: req.user._id } },
+      { $group: { _id: "$gnDivision", count: { $sum: 1 } } },
+      { $project: { division: "$_id", count: 1, _id: 0 } }
+    ]);
+
+    res.json(shopsByDivision);
+  } catch (error) {
+    console.error('Error fetching shops by division:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -117,6 +118,24 @@ router.get('/:id', auth, async (req, res) => {
     if (error.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Shop not found' });
     }
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/shops/name/:name
+// @desc    Get shop by name
+// @access  Private
+router.get('/name/:name', auth, async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ name: req.params.name, createdBy: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ message: 'Shop not found' });
+    }
+
+    res.json(shop);
+  } catch (error) {
+    console.error('Get shop by name error:', error.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
