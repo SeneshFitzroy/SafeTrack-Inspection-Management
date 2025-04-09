@@ -22,8 +22,49 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:3000',                      // Local React development
+  'http://localhost:5173',                      // Local Vite development
+  process.env.REACT_APP_FRONTEND_URL,           // Frontend URL from env
+  'https://safetrack-app.netlify.app',          // Replace with your actual Netlify domain
+  'https://*.netlify.app'                       // Allow all Netlify subdomains for preview deploys
+].filter(Boolean); // Remove any undefined values
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin matches any allowed origin
+    // Also check for wildcard subdomains on netlify.app
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin === '*') return true;
+      if (allowedOrigin === origin) return true;
+      
+      // Handle wildcard subdomains
+      if (allowedOrigin.includes('*.netlify.app') && 
+          origin.endsWith('netlify.app')) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked for:', origin);
+      callback(null, false); // Don't throw error, just block the request
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
