@@ -3,7 +3,8 @@
 Welcome to the **SafeTrack Web Application**! This platform is designed to streamline Public Health Inspections (PHI) workflows in Sri Lanka, transitioning from outdated, paper-based systems to a fully digital, real-time solution for food safety inspections. The application offers real-time data entry, instant reporting, and complete digital record management, allowing PHIs to focus on what matters most—ensuring public health and safety.
 
 🔗 **[Figma Design Link](https://www.figma.com/design/KDL5igjmoget3gSd3alKxL/Safe-Track-Web-Application?node-id=0-1&t=2v0NIklwNLr2x7ZJ-1)**  
-🔗 **[Project Proposal Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/Emh3eQ8nZKtDgKC-6sobeIoBtf7TOsi5qggVFQdLM_zjFQ?e=6cSXBC)**
+🔗 **[Project Proposal Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/Emh3eQ8nZKtDgKC-6sobeIoBtf7TOsi5qggVFQdLM_zjFQ?e=6cSXBC)**  
+🔗 **[Features Document Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/EoUU-J4nQJ9OkV1j-imAgF8BAgmbDLHNR8vYdEW_n_qZMw?e=J8FaVM)**
 
 ---
 
@@ -223,3 +224,4 @@ This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LIC
 
 The SafeTrack web application is deployed and hosted on **Netlify** for fast, reliable performance. Visit the live version here:  
 🔗 **[SafeTrack Live](https://graceful-vacherin-0fb111.netlify.app/)**
+```
