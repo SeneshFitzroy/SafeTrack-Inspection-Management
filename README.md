@@ -4,7 +4,8 @@ Welcome to the **SafeTrack Web Application**! This platform is designed to strea
 
 🔗 **[Figma Design Link](https://www.figma.com/design/KDL5igjmoget3gSd3alKxL/Safe-Track-Web-Application?node-id=0-1&t=2v0NIklwNLr2x7ZJ-1)**  
 🔗 **[Project Proposal Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/Emh3eQ8nZKtDgKC-6sobeIoBtf7TOsi5qggVFQdLM_zjFQ?e=6cSXBC)**  
-🔗 **[Features Document Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/EoUU-J4nQJ9OkV1j-imAgF8BAgmbDLHNR8vYdEW_n_qZMw?e=J8FaVM)**
+🔗 **[Features Document Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/EoUU-J4nQJ9OkV1j-imAgF8BAgmbDLHNR8vYdEW_n_qZMw?e=J8FaVM)**  
+🔗 **[Advanced User Manual Link](https://nsbm365-my.sharepoint.com/:f:/g/personal/dsfmendis_students_nsbm_ac_lk/Emh3eQ8nZKtDgKC-6sobeIoBtf7TOsi5qggVFQdLM_zjFQ?e=6cSXBC)**
 
 ---
 
